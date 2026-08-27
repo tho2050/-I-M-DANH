@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Danh Sách Hoạt Động Điểm Danh - Hệ Thống Điểm Danh GPS</title>
+    <meta name="description" content="Hệ thống điểm danh sự kiện & hoạt động bằng xác thực vị trí GPS vệ tinh" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-custom {
+            background: rgba(15, 15, 26, 0.85) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+            padding: 0.8rem 0;
+        }
+        .navbar-custom .navbar-brand {
+            font-weight: 800;
+            font-size: 1.15rem;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
+            text-decoration: none;
+        }
+        .navbar-custom .nav-link {
+            color: #94a3b8 !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .navbar-custom .nav-link:hover,
+        .navbar-custom .nav-link.active {
+            color: #e2e8f0 !important;
+            background: rgba(99, 102, 241, 0.12);
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero-section {
+            position: relative;
+            padding: 3rem 0 2.5rem;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -80px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .hero-subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+            max-width: 560px;
+            line-height: 1.6;
+        }
+        .btn-hero-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 12px 28px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+            color: #fff;
+        }
+        .btn-hero-outline {
+            background: transparent;
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 12px 24px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .btn-hero-outline:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.6);
+            color: #c4b5fd;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar-section {
+            margin-bottom: 2rem;
+        }
+        .search-box {
+            position: relative;
+        }
+        .search-box input {
+            background: rgba(30, 30, 56, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 12px 16px 12px 44px;
+            color: #e2e8f0;
+            font-size: 0.92rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .search-box .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        /* ===== ACTIVITY CARDS ===== */
+        .activity-card {
+            background: rgba(22, 22, 42, 0.7);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+        .activity-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12);
+        }
+        .card-header-strip {
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+        .card-body-content {
+            padding: 1.4rem 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin: 0.8rem 0 0.3rem;
+            line-height: 1.35;
+        }
+        .card-desc {
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.84rem;
+            color: #94a3b8;
+            margin-bottom: 0.6rem;
+        }
+        .info-row i { color: #6366f1; width: 16px; margin-top: 2px; }
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 0.5rem;
+        }
+        .btn-checkin-card {
+            flex: 1;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-checkin-card:hover { color: #fff; opacity: 0.9; }
+
+        .site-footer {
+            background: rgba(15, 15, 26, 0.9);
+            border-top: 1px solid rgba(99, 102, 241, 0.1);
+            padding: 1.2rem 0;
+            color: #64748b;
+            font-size: 0.82rem;
+            text-align: center;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance (Web Tĩnh)
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- ===== HERO SECTION ===== -->
+        <section class="hero-section">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 class="hero-title mb-3">Hệ Thống Điểm Danh<br/>Hoạt Động & Sự Kiện (Sheets API)</h1>
+                    <p class="hero-subtitle mb-4">
+                        Chọn hoạt động bạn đang tham gia để xác thực vị trí GPS và tự động gửi dữ liệu điểm danh trực tiếp về Google Sheets.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <a href="scan.html" class="btn btn-hero-primary">
+                            <i class="fa-solid fa-qrcode me-2"></i> Nhập Mã Sự Kiện
+                        </a>
+                        <button class="btn btn-hero-outline" onclick="requestUserLocation()">
+                            <i class="fa-solid fa-location-crosshairs me-2"></i>
+                            <span id="gpsStatusText">GPS Điện Thoại</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOLBAR ===== -->
+        <section class="toolbar-section">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm hoạt động, địa điểm..." oninput="filterActivities()" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== GRID ===== -->
+        <div class="row g-4" id="activitiesGrid"></div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            &copy; 2026 GPS Attendance System &mdash; Điểm danh tự động qua Google Sheets
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        let userCoords = null;
+
+        // Render activities dynamically
+        window.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('activitiesGrid');
+            grid.innerHTML = CONFIG.activities.map(item => `
+                <div class="col-md-6 col-lg-4 activity-item" 
+                     data-title="${item.title.toLowerCase()}" 
+                     data-code="${item.code.toLowerCase()}"
+                     data-location="${item.locationAddress.toLowerCase()}"
+                     data-lat="${item.latitude}" 
+                     data-lng="${item.longitude}">
+                    <div class="activity-card">
+                        <div class="card-header-strip"></div>
+                        <div class="card-body-content">
+                            <div>
+                                <span class="code-badge"><i class="fa-solid fa-hashtag"></i> ${item.code}</span>
+                            </div>
+                            <h5 class="card-title">${item.title}</h5>
+                            <p class="card-desc">${item.description || 'Không có mô tả.'}</p>
+                            <hr style="border-top:1px solid rgba(99,102,241,0.1); margin: 0.5rem 0;" />
+                            <div class="my-2 flex-grow-1">
+                                <div class="info-row">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <span class="text-truncate" title="${item.locationAddress}">${item.locationAddress}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="fa-solid fa-bullseye"></i>
+                                    <span>Bán kính: <strong>${item.radiusMeters} m</strong></span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span>Thời gian: ${item.startTime}</span>
+                                </div>
+                                <div class="info-row distance-row d-none">
+                                    <i class="fa-solid fa-route" style="color: #c084fc;"></i>
+                                    <span style="color: #c084fc;">Cách bạn: <strong class="distance-value">--</strong></span>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <a href="checkin.html?code=${item.code}" class="btn-checkin-card">
+                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Điểm danh ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        function filterActivities() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.activity-item').forEach(item => {
+                const t = item.dataset.title;
+                const c = item.dataset.code;
+                const l = item.dataset.location;
+                item.style.display = (t.includes(q) || c.includes(q) || l.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const toRad = v => v * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function requestUserLocation() {
+            if (!navigator.geolocation) return;
+            const statusEl = document.getElementById('gpsStatusText');
+            statusEl.textContent = 'Đang định vị...';
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    statusEl.textContent = 'Định vị OK';
+                    document.querySelectorAll('.activity-item').forEach(item => {
+                        const lat = parseFloat(item.dataset.lat);
+                        const lng = parseFloat(item.dataset.lng);
+                        const dist = haversine(userCoords.lat, userCoords.lng, lat, lng);
+                        const row = item.querySelector('.distance-row');
+                        const val = item.querySelector('.distance-value');
+                        row.classList.remove('d-none');
+                        val.textContent = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(1) + ' km';
+                    });
+                },
+                err => { statusEl.textContent = 'Lỗi định vị'; }
+            );
+        }
+    </script>
+</body>
+</html>

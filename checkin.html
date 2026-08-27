@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Điểm Danh GPS - Bảng tính Google</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1e293b; min-height: 100vh; }
+        .top-bar { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); padding: 0.6rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); color: white; }
+        .sub-bar { background: #1a4b8c; color: white; }
+        .sub-bar a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.82rem; font-weight: 500; padding: 10px 16px; display: inline-flex; align-items: center; gap: 6px; }
+        
+        .activity-header { background: #fff; border-radius: 14px; padding: 1.5rem 2rem; margin-top: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+        .code-badge { background: #eef2ff; color: #3b50b5; font-weight: 700; font-size: 0.82rem; padding: 6px 14px; border-radius: 8px; border: 1px solid #c7d2fe; font-family: monospace; }
+        .activity-header h1 { font-size: 1.55rem; font-weight: 800; color: #0f172a; margin: 0.7rem 0 0.5rem; }
+        .activity-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: #64748b; }
+        .meta-item.location i { color: #ef4444; }
+
+        .panel-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; }
+        .step-num { background: #1a4b8c; color: #fff; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+        .step-title { font-weight: 700; font-size: 0.95rem; color: #0f172a; margin-left: 8px; }
+        .panel-body { padding: 1.25rem 1.5rem; flex: 1; display: flex; flex-direction: column; }
+
+        .gps-tabs { display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 1rem; }
+        .gps-tab { flex: 1; text-align: center; padding: 10px 12px; font-size: 0.82rem; font-weight: 600; color: #64748b; border: none; background: transparent; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .gps-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+        #checkinMap { width: 100%; height: 280px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+        .gps-info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+        .gps-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 4px 0; }
+        .gps-info-row .value.distance { font-size: 1.4rem; color: #1a4b8c; font-weight: 800; }
+        
+        .status-tag { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+        .status-tag.in-range { background: #dcfce7; color: #16a34a; }
+        .status-tag.out-range { background: #fee2e2; color: #dc2626; }
+
+        .btn-gps-verify { width: 100%; padding: 14px; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-gps-verify.verify { background: linear-gradient(135deg, #1a4b8c 0%, #1e3a5f 100%); color: #fff; }
+        .btn-gps-verify.verified { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+
+        .badge-form-status { font-weight: 600; font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; }
+        .badge-form-status.locked { background: #fee2e2; color: #dc2626; }
+        .badge-form-status.unlocked { background: #dcfce7; color: #16a34a; }
+
+        .gps-alert { border-radius: 10px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 10px; }
+        .gps-alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .gps-alert.warning { background: #fffbeb; border: 1px solid #fed7aa; color: #92400e; }
+        
+        .form-section label { font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px; }
+        .form-section .form-control { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; }
+        .quick-samples { display: flex; gap: 6px; margin-top: 6px; margin-bottom: 1rem; }
+        .quick-sample-btn { font-size: 0.75rem; padding: 4px 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; cursor: pointer; }
+        
+        .btn-submit-checkin { width: 100%; padding: 14px; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-submit-checkin:disabled { background: #94a3b8; cursor: not-allowed; }
+        
+        .result-box { border-radius: 10px; padding: 1rem 1.2rem; margin-top: 1rem; font-size: 0.88rem; display: none; }
+        .result-box.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .result-box.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        
+        .test-mode-panel { display: none; }
+        .test-mode-panel.active { display: block; }
+        .device-mode-panel.hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance (Web Tĩnh)</h5>
+            <a href="index.html" class="btn btn-sm btn-outline-light">Trang Chủ</a>
+        </div>
+    </div>
+    <div class="sub-bar py-2">
+        <div class="container">
+            <span class="small text-white-50"><i class="fa-solid fa-info-circle me-1"></i> Tích hợp lưu dữ liệu trực tiếp về Google Sheets qua API Google Form ngầm.</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Activity Header -->
+        <div class="activity-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <span class="code-badge"><i class="fa-solid fa-fingerprint"></i> Mã Sự Kiện: <span id="actCodeHeader">---</span></span>
+                    <h1 id="actTitle">Đang tải hoạt động...</h1>
+                    <div class="activity-meta">
+                        <span class="meta-item location"><i class="fa-solid fa-location-dot"></i> Địa điểm: <strong id="actLocation">---</strong></span>
+                        <span class="meta-item"><i class="fa-solid fa-bullseye"></i> Bán kính: <strong id="actRadius">---</strong></span>
+                    </div>
+                </div>
+                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+            </div>
+        </div>
+
+        <!-- 2 Columns -->
+        <div class="row g-4 mt-2 mb-5">
+            <!-- Cột trái: Xác thực GPS -->
+            <div class="col-lg-5">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <span class="step-num">1</span>
+                            <span class="step-title">Xác Thực Định Vị GPS</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <!-- GPS Tabs -->
+                        <div class="gps-tabs">
+                            <button class="gps-tab active" onclick="switchGpsMode('device', this)">1. GPS Thiết Bị</button>
+                            <button class="gps-tab" onclick="switchGpsMode('test', this)">2. Chế độ Test (PC)</button>
+                        </div>
+
+                        <!-- Device mode map -->
+                        <div id="deviceModePanel" class="device-mode-panel">
+                            <div id="checkinMap"></div>
+                        </div>
+
+                        <!-- Test mode controls -->
+                        <div id="testModePanel" class="test-mode-panel">
+                            <div class="gps-alert warning py-2 mb-2">
+                                <div><i class="fa-solid fa-info-circle"></i> Kéo ghim màu đỏ vào vùng xanh để giả lập GPS.</div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="small text-muted">Vĩ độ (Lat)</label>
+                                    <input type="number" step="any" class="form-control form-control-sm" id="testLat" />
+                                </div>
+                                <div class="col-6">
+                                    <label class="small text-muted">Kinh độ (Lng)</label>
+                                    <input type="number" step="any" class="form-control form-control-sm" id="testLng" />
+                                </div>
+                            </div>
+                            <div id="testMapContainer" style="height: 220px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></div>
+                        </div>
+
+                        <!-- GPS info box -->
+                        <div class="gps-info-box">
+                            <div class="gps-info-row">
+                                <span class="text-muted">Khoảng cách tới sự kiện:</span>
+                                <span class="value distance" id="distanceValue">-- m</span>
+                            </div>
+                            <div class="gps-info-row">
+                                <span class="text-muted">Tọa độ:</span>
+                                <span class="small" id="coordsValue">--, --</span>
+                            </div>
+                            <div class="gps-info-row">
+                                <span class="text-muted">Trạng thái bán kính:</span>
+                                <span id="radiusStatus"><span class="status-tag out-range">Chưa định vị</span></span>
+                            </div>
+                        </div>
+
+                        <button class="btn-gps-verify verify" id="btnGpsVerify" onclick="verifyGps()">
+                            <i class="fa-solid fa-shield-check me-2"></i>XÁC THỰC VỊ TRÍ & MỞ FORM
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form thông tin -->
+            <div class="col-lg-7">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <span class="step-num" style="background: #059669;">2</span>
+                            <span class="step-title">Điền Thông Tin Sinh Viên</span>
+                        </div>
+                        <span class="badge-form-status locked" id="formStatusBadge"><i class="fa-solid fa-lock me-1"></i>ĐANG KHÓA FORM</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="gps-alert warning" id="formGpsAlert">
+                            <div><i class="fa-solid fa-warning me-2"></i>Vui lòng xác thực định vị ở Bước 1 trước để mở khóa Form.</div>
+                        </div>
+
+                        <div class="form-section" id="studentForm">
+                            <div class="mb-3">
+                                <label>Mã số sinh viên (MSSV) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="studentCode" placeholder="Ví dụ: 21000123" disabled />
+                                <div class="quick-samples">
+                                    <span class="small text-muted">Chọn mẫu:</span>
+                                    <button class="quick-sample-btn" onclick="fillSample('21000123', 'Nguyễn Văn An')">An</button>
+                                    <button class="quick-sample-btn" onclick="fillSample('21000456', 'Trần Thị Bình')">Bình</button>
+                                    <button class="quick-sample-btn" onclick="fillSample('21000789', 'Lê Văn Nam')">Nam</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Họ và Tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="fullName" placeholder="Nguyễn Văn An" disabled />
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label>Lớp</label>
+                                    <input type="text" class="form-control" id="className" placeholder="CNTT-K21A" disabled />
+                                </div>
+                                <div class="col-6">
+                                    <label>Khoa</label>
+                                    <input type="text" class="form-control" id="faculty" placeholder="Công nghệ thông tin" disabled />
+                                </div>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label>Số điện thoại</label>
+                                    <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" disabled />
+                                </div>
+                                <div class="col-6">
+                                    <label>Email</label>
+                                    <input type="email" class="form-control" id="email" placeholder="sv@@muce.edu.vn" disabled />
+                                </div>
+                            </div>
+
+                            <button class="btn-submit-checkin" id="btnSubmit" disabled onclick="submitCheckIn()">
+                                <i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA
+                            </button>
+
+                            <div class="result-box" id="resultBox"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
+    <script>
+        // Extract Activity Code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let actCode = urlParams.get('code') || '';
+        
+        // If code is defined by route format `/Activity/CheckIn/{code}`
+        if (!actCode) {
+            const paths = window.location.pathname.split('/');
+            actCode = paths[paths.length - 1];
+        }
+
+        const activity = CONFIG.activities.find(a => a.code.toLowerCase() === actCode.trim().toLowerCase());
+
+        if (!activity) {
+            alert('Không tìm thấy thông tin hoạt động!');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('actCodeHeader').textContent = activity.code;
+        document.getElementById('actTitle').textContent = activity.title;
+        document.getElementById('actLocation').textContent = activity.locationAddress;
+        document.getElementById('actRadius').textContent = activity.radiusMeters + ' mét';
+
+        const targetLat = activity.latitude;
+        const targetLng = activity.longitude;
+        const radiusMeters = activity.radiusMeters;
+
+        let userLat = 0, userLng = 0;
+        let gpsValid = false;
+        let gpsMode = 'device';
+        let map, marker, circle, userMarker;
+        let testMap, testMarker;
+
+        // Init Map
+        window.addEventListener('DOMContentLoaded', () => {
+            map = L.map('checkinMap').setView([targetLat, targetLng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([targetLat, targetLng]).addTo(map)
+                .bindPopup(`<b>${activity.title}</b>`).openPopup();
+
+            circle = L.circle([targetLat, targetLng], {
+                color: '#1a4b8c', fillColor: '#3b82f6', fillOpacity: 0.15,
+                radius: radiusMeters, weight: 2, dashArray: '6, 4'
+            }).addTo(map);
+
+            requestDeviceGps();
+        });
+
+        function switchGpsMode(mode, btn) {
+            gpsMode = mode;
+            document.querySelectorAll('.gps-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (mode === 'device') {
+                document.getElementById('deviceModePanel').classList.remove('hidden');
+                document.getElementById('testModePanel').classList.remove('active');
+                requestDeviceGps();
+            } else {
+                document.getElementById('deviceModePanel').classList.add('hidden');
+                document.getElementById('testModePanel').classList.add('active');
+                document.getElementById('testLat').value = targetLat;
+                document.getElementById('testLng').value = targetLng;
+                initTestMap();
+                userLat = targetLat;
+                userLng = targetLng;
+                updateGpsDisplay();
+            }
+        }
+
+        function initTestMap() {
+            if (testMap) return;
+            setTimeout(() => {
+                testMap = L.map('testMapContainer').setView([targetLat, targetLng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(testMap);
+                L.circle([targetLat, targetLng], { color: '#1a4b8c', fillColor: '#3b82f6', fillOpacity: 0.15, radius: radiusMeters }).addTo(testMap);
+                L.marker([targetLat, targetLng]).addTo(testMap);
+
+                testMarker = L.marker([targetLat, targetLng], {
+                    draggable: true,
+                    icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41]
+                    })
+                }).addTo(testMap);
+
+                testMarker.on('dragend', () => {
+                    const pos = testMarker.getLatLng();
+                    document.getElementById('testLat').value = pos.lat.toFixed(6);
+                    document.getElementById('testLng').value = pos.lng.toFixed(6);
+                    userLat = pos.lat;
+                    userLng = pos.lng;
+                    updateGpsDisplay();
+                });
+
+                document.getElementById('testLat').addEventListener('input', () => {
+                    const lat = parseFloat(document.getElementById('testLat').value);
+                    const lng = parseFloat(document.getElementById('testLng').value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        userLat = lat; userLng = lng;
+                        testMarker.setLatLng([lat, lng]);
+                        updateGpsDisplay();
+                    }
+                });
+                document.getElementById('testLng').addEventListener('input', () => {
+                    const lat = parseFloat(document.getElementById('testLat').value);
+                    const lng = parseFloat(document.getElementById('testLng').value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        userLat = lat; userLng = lng;
+                        testMarker.setLatLng([lat, lng]);
+                        updateGpsDisplay();
+                    }
+                });
+            }, 200);
+        }
+
+        function requestDeviceGps() {
+            if (!navigator.geolocation) {
+                alert('Trình duyệt không hỗ trợ GPS.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    updateGpsDisplay();
+
+                    if (userMarker) userMarker.setLatLng([userLat, userLng]);
+                    else {
+                        userMarker = L.marker([userLat, userLng], {
+                            icon: L.icon({
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                                iconSize: [25, 41], iconAnchor: [12, 41]
+                            })
+                        }).addTo(map);
+                    }
+                    const bounds = L.latLngBounds([[targetLat, targetLng], [userLat, userLng]]);
+                    map.fitBounds(bounds.pad(0.3));
+                },
+                err => {
+                    alert('Lỗi định vị. Hãy dùng Chế độ Test (PC) hoặc cấp quyền vị trí.');
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const toRad = v => v * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function updateGpsDisplay() {
+            const dist = haversine(userLat, userLng, targetLat, targetLng);
+            gpsValid = dist <= radiusMeters;
+
+            document.getElementById('distanceValue').textContent = dist.toFixed(1) + ' m';
+            document.getElementById('coordsValue').textContent = userLat.toFixed(6) + ', ' + userLng.toFixed(6);
+
+            const statusEl = document.getElementById('radiusStatus');
+            if (gpsValid) {
+                statusEl.innerHTML = '<span class="status-tag in-range"><i class="fa-solid fa-check-circle me-1"></i>Trong vùng hợp lệ</span>';
+                document.getElementById('distanceValue').style.color = '#16a34a';
+            } else {
+                statusEl.innerHTML = '<span class="status-tag out-range"><i class="fa-solid fa-times-circle me-1"></i>Ngoài vùng</span>';
+                document.getElementById('distanceValue').style.color = '#dc2626';
+            }
+        }
+
+        function verifyGps() {
+            const dist = haversine(userLat, userLng, targetLat, targetLng);
+            const isValid = dist <= radiusMeters;
+            
+            const btn = document.getElementById('btnGpsVerify');
+            
+            if (isValid) {
+                btn.className = 'btn-gps-verify verified';
+                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> ĐÃ XÁC THỰC - VỊ TRÍ HỢP LỆ';
+                btn.disabled = true;
+
+                // Mở khóa Form
+                document.getElementById('formStatusBadge').className = 'badge-form-status unlocked';
+                document.getElementById('formStatusBadge').innerHTML = '<i class="fa-solid fa-lock-open me-1"></i>ĐÃ MỞ KHÓA FORM';
+                document.getElementById('formGpsAlert').className = 'gps-alert success';
+                document.getElementById('formGpsAlert').innerHTML = `<div><i class="fa-solid fa-check-circle me-2"></i>Vị trí hợp lệ! Khoảng cách tới điểm: <strong>${dist.toFixed(1)}m</strong>. Bạn có thể điền thông tin và bấm điểm danh.</div>`;
+                
+                document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = false);
+                document.getElementById('btnSubmit').disabled = false;
+            } else {
+                alert(`Vị trí không hợp lệ! Bạn đang ở cách địa điểm ${dist.toFixed(1)} mét, vượt quá bán kính quy định ${radiusMeters} mét.`);
+            }
+        }
+
+        function fillSample(code, name) {
+            if (document.getElementById('studentCode').disabled) return;
+            document.getElementById('studentCode').value = code;
+            document.getElementById('fullName').value = name;
+        }
+
+        async function submitCheckIn() {
+            const studentCode = document.getElementById('studentCode').value.trim();
+            const fullName = document.getElementById('fullName').value.trim();
+
+            if (!studentCode || !fullName) {
+                alert('Vui lòng điền MSSV và Họ tên đầy đủ.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang gửi thông tin...';
+
+            const dist = haversine(userLat, userLng, targetLat, targetLng);
+
+            // Gửi dữ liệu lên Google Sheets thông qua Google Form API ngầm
+            const formUrl = CONFIG.googleFormUrl;
+            const formData = new FormData();
+            
+            formData.append(CONFIG.formFields.activityCode, activity.code);
+            formData.append(CONFIG.formFields.studentCode, studentCode);
+            formData.append(CONFIG.formFields.fullName, fullName);
+            formData.append(CONFIG.formFields.className, document.getElementById('className').value);
+            formData.append(CONFIG.formFields.faculty, document.getElementById('faculty').value);
+            formData.append(CONFIG.formFields.phoneNumber, document.getElementById('phoneNumber').value);
+            formData.append(CONFIG.formFields.email, document.getElementById('email').value);
+            formData.append(CONFIG.formFields.gpsCoords, `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`);
+            formData.append(CONFIG.formFields.distance, dist.toFixed(1) + "m");
+            formData.append(CONFIG.formFields.deviceInfo, navigator.userAgent);
+
+            // Vì Google Form response không trả về CORS header cho Web tĩnh,
+            // chúng ta sử dụng mode 'no-cors' để gửi dữ liệu đi thành công mà không bị lỗi trình duyệt chặn.
+            try {
+                await fetch(formUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+
+                // Google Form no-cors gửi thành công
+                const resultBox = document.getElementById('resultBox');
+                resultBox.style.display = 'block';
+                resultBox.className = 'result-box success';
+                resultBox.innerHTML = `<h5>🎉 Điểm danh THÀNH CÔNG!</h5>
+                    <p class="mb-0">Dữ liệu của sinh viên <strong>${fullName} (${studentCode})</strong> đã được ghi nhận trực tiếp vào Bảng tính Google Sheets của Ban tổ chức.</p>`;
+                
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> ĐÃ HOÀN TẤT ĐIỂM DANH';
+                document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = true);
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';
+                alert('Có lỗi xảy ra khi kết nối mạng. Hãy thử lại.');
+            }
+        }
+    </script>
+</body>
+</html>
