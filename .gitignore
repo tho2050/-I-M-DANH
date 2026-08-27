@@ -1,0 +1,33 @@
+## Visual Studio Code
+.vscode/
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Re]leases/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio 2015/2017/2019/2022 cache/options directory
+.vs/
+
+## Database and temporary files
+*.db
+*.db-shm
+*.db-wal
+appsettings.Development.json
