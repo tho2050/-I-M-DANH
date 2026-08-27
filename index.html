@@ -28,6 +28,7 @@
             font-weight: 800;
             font-size: 1.15rem;
             background: linear-gradient(135deg, #818cf8, #c084fc);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.3px;
@@ -68,6 +69,7 @@
             font-weight: 800;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 50%, #c084fc 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             line-height: 1.2;
@@ -240,10 +242,15 @@
 
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
-            <div class="container">
+            <div class="container d-flex justify-content-between align-items-center">
                 <a class="navbar-brand" href="index.html">
-                    <i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance (Web Tĩnh)
+                    <i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance
                 </a>
+                <div class="d-flex gap-2">
+                    <a href="index.html" class="nav-link active"><i class="fa-solid fa-calendar-days me-1"></i> Danh Sách Hoạt Động</a>
+                    <a href="scan.html" class="nav-link"><i class="fa-solid fa-qrcode me-1"></i> Quét QR Camera</a>
+                    <a href="admin.html" class="nav-link text-warning"><i class="fa-solid fa-gears me-1"></i> Trang Quản Trị</a>
+                </div>
             </div>
         </nav>
     </header>
@@ -253,17 +260,17 @@
         <section class="hero-section">
             <div class="row align-items-center">
                 <div class="col-lg-7">
-                    <h1 class="hero-title mb-3">Hệ Thống Điểm Danh<br/>Hoạt Động & Sự Kiện (Sheets API)</h1>
+                    <h1 class="hero-title mb-3">Hệ Thống Điểm Danh<br/>Hoạt Động & Sự Kiện GPS</h1>
                     <p class="hero-subtitle mb-4">
                         Chọn hoạt động bạn đang tham gia để xác thực vị trí GPS và tự động gửi dữ liệu điểm danh trực tiếp về Google Sheets.
                     </p>
                     <div class="d-flex flex-wrap gap-3 mb-4">
                         <a href="scan.html" class="btn btn-hero-primary">
-                            <i class="fa-solid fa-qrcode me-2"></i> Nhập Mã Sự Kiện
+                            <i class="fa-solid fa-qrcode me-2"></i> Quét Mã QR
                         </a>
                         <button class="btn btn-hero-outline" onclick="requestUserLocation()">
                             <i class="fa-solid fa-location-crosshairs me-2"></i>
-                            <span id="gpsStatusText">GPS Điện Thoại</span>
+                            <span id="gpsStatusText">GPS Thiết Bị</span>
                         </button>
                     </div>
                 </div>
@@ -292,14 +299,22 @@
         </div>
     </footer>
 
-    <script src="config.js"></script>
+    <script src="/config.js"></script>
     <script>
+        /* global getActivities */
         let userCoords = null;
 
         // Render activities dynamically
         window.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('activitiesGrid');
-            grid.innerHTML = CONFIG.activities.map(item => `
+            const list = getActivities(); // Dùng hàm getActivities() từ config.js để lấy danh sách động từ admin
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="text-center py-5"><h5 class="text-muted">Không có sự kiện nào.</h5></div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(item => `
                 <div class="col-md-6 col-lg-4 activity-item" 
                      data-title="${item.title.toLowerCase()}" 
                      data-code="${item.code.toLowerCase()}"

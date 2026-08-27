@@ -69,16 +69,19 @@
     </style>
 </head>
 <body>
-
     <div class="top-bar">
         <div class="container d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance (Web Tĩnh)</h5>
-            <a href="index.html" class="btn btn-sm btn-outline-light">Trang Chủ</a>
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance</h5>
+            <div class="d-flex gap-2">
+                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-calendar-days me-1"></i> Danh Sách Hoạt Động</a>
+                <a href="scan.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-qrcode me-1"></i> Quét QR Camera</a>
+                <a href="admin.html" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-gears me-1"></i> Trang Quản Trị</a>
+            </div>
         </div>
     </div>
     <div class="sub-bar py-2">
         <div class="container">
-            <span class="small text-white-50"><i class="fa-solid fa-info-circle me-1"></i> Tích hợp lưu dữ liệu trực tiếp về Google Sheets qua API Google Form ngầm.</span>
+            <span class="small text-white-50"><i class="fa-solid fa-info-circle me-1"></i> Xác thực định vị GPS trong bán kính quy định (50m) để mở khóa form và điểm danh về Google Sheets.</span>
         </div>
     </div>
 
@@ -91,10 +94,10 @@
                     <h1 id="actTitle">Đang tải hoạt động...</h1>
                     <div class="activity-meta">
                         <span class="meta-item location"><i class="fa-solid fa-location-dot"></i> Địa điểm: <strong id="actLocation">---</strong></span>
-                        <span class="meta-item"><i class="fa-solid fa-bullseye"></i> Bán kính: <strong id="actRadius">---</strong></span>
+                        <span class="meta-item"><i class="fa-solid fa-bullseye"></i> Bán kính cho phép: <strong id="actRadius">---</strong></span>
                     </div>
                 </div>
-                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Danh Sách Sự Kiện</a>
             </div>
         </div>
 
@@ -106,7 +109,7 @@
                     <div class="panel-header">
                         <div>
                             <span class="step-num">1</span>
-                            <span class="step-title">Xác Thực Định Vị GPS</span>
+                            <span class="step-title">Xác Thực Định Vị GPS (≤ 50m)</span>
                         </div>
                     </div>
                     <div class="panel-body">
@@ -226,7 +229,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="config.js"></script>
+    <script src="/config.js"></script>
     <script>
         // Extract Activity Code from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -238,11 +241,12 @@
             actCode = paths[paths.length - 1];
         }
 
-        const activity = CONFIG.activities.find(a => a.code.toLowerCase() === actCode.trim().toLowerCase());
+        const list = getActivities(); // Lấy danh sách hoạt động động từ localStorage/config
+        const activity = list.find(a => a.code.toLowerCase() === actCode.trim().toLowerCase());
 
         if (!activity) {
             alert('Không tìm thấy thông tin hoạt động!');
-            window.location.href = 'index.html';
+            window.location.href = '/index.html';
         }
 
         document.getElementById('actCodeHeader').textContent = activity.code;
@@ -262,18 +266,26 @@
 
         // Init Map
         window.addEventListener('DOMContentLoaded', () => {
-            map = L.map('checkinMap').setView([targetLat, targetLng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
+            try {
+                if (typeof L !== 'undefined') {
+                    map = L.map('checkinMap').setView([targetLat, targetLng], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
 
-            marker = L.marker([targetLat, targetLng]).addTo(map)
-                .bindPopup(`<b>${activity.title}</b>`).openPopup();
+                    marker = L.marker([targetLat, targetLng]).addTo(map)
+                        .bindPopup(`<b>${activity.title}</b>`).openPopup();
 
-            circle = L.circle([targetLat, targetLng], {
-                color: '#1a4b8c', fillColor: '#3b82f6', fillOpacity: 0.15,
-                radius: radiusMeters, weight: 2, dashArray: '6, 4'
-            }).addTo(map);
+                    circle = L.circle([targetLat, targetLng], {
+                        color: '#1a4b8c', fillColor: '#3b82f6', fillOpacity: 0.15,
+                        radius: radiusMeters, weight: 2, dashArray: '6, 4'
+                    }).addTo(map);
+                } else {
+                    console.warn("Leaflet library not loaded, skipping map drawing");
+                }
+            } catch (err) {
+                console.error("Map initialization failed", err);
+            }
 
             requestDeviceGps();
         });
@@ -460,14 +472,29 @@
             formData.append(CONFIG.formFields.distance, dist.toFixed(1) + "m");
             formData.append(CONFIG.formFields.deviceInfo, navigator.userAgent);
 
-            // Vì Google Form response không trả về CORS header cho Web tĩnh,
-            // chúng ta sử dụng mode 'no-cors' để gửi dữ liệu đi thành công mà không bị lỗi trình duyệt chặn.
             try {
                 await fetch(formUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: formData
                 });
+
+                // Lưu cục bộ vào localStorage để admin.html đồng bộ tức thì
+                const localRecords = localStorage.getItem("gps_attendance_local_records") 
+                    ? JSON.parse(localStorage.getItem("gps_attendance_local_records")) 
+                    : [];
+                
+                localRecords.unshift({
+                    timestamp: new Date().toLocaleString('vi-VN'),
+                    code: activity.code,
+                    studentCode: studentCode,
+                    name: fullName,
+                    className: document.getElementById('className').value || '',
+                    faculty: document.getElementById('faculty').value || '',
+                    distance: dist.toFixed(1) + "m",
+                    device: "Thiết Bị Chạy Thử"
+                });
+                localStorage.setItem("gps_attendance_local_records", JSON.stringify(localRecords));
 
                 // Google Form no-cors gửi thành công
                 const resultBox = document.getElementById('resultBox');

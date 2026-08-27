@@ -1,5 +1,14 @@
 // CẤU HÌNH HỆ THỐNG ĐIỂM DANH GPS
 const CONFIG = {
+    // Mật khẩu trang quản trị (Admin Panel)
+    adminPassword: "admin123",
+
+    // Link Google Sheets kết quả (để Admin click xem trực tiếp)
+    googleSheetUrl: "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit",
+
+    // Link CSV xuất bản web của Google Sheets (Publish to the Web -> CSV) để đồng bộ hiển thị và xuất file Excel
+    googleSheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/YOUR_PUBLISHED_ID/pub?gid=0&single=true&output=csv",
+
     // 1. LINK GOOGLE FORM CỦA BẠN (Sử dụng link submit ngầm)
     // Bạn sẽ thay thế link này và các Entry ID sau khi tạo Google Form
     googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfD_YOUR_FORM_ID/formResponse",
@@ -17,7 +26,7 @@ const CONFIG = {
         deviceInfo: "entry.101010101"  // Thông tin thiết bị
     },
 
-    // 2. DANH SÁCH CÁC SỰ KIỆN / HOẠT ĐỘNG
+    // 2. DANH SÁCH CÁC SỰ KIỆN / HOẠT ĐỘNG MẶC ĐỊNH
     activities: [
         {
             code: "SVTN2026",
@@ -26,7 +35,7 @@ const CONFIG = {
             locationAddress: "Hội trường A1 - Đại học Bách Khoa TP.HCM",
             latitude: 10.7725,
             longitude: 106.6581,
-            radiusMeters: 150,
+            radiusMeters: 50, // Mặc định 50m theo đề xuất
             startTime: "07:00 27/08/2026",
             endTime: "17:00 27/08/2026"
         },
@@ -37,7 +46,7 @@ const CONFIG = {
             locationAddress: "Phòng 301 - Nhà C6, ĐHQG Hà Nội",
             latitude: 21.0388,
             longitude: 105.7828,
-            radiusMeters: 100,
+            radiusMeters: 50, // Mặc định 50m
             startTime: "08:30 28/08/2026",
             endTime: "16:30 28/08/2026"
         },
@@ -48,9 +57,33 @@ const CONFIG = {
             locationAddress: "Phòng máy tính B2.01 - Đại học Cần Thơ",
             latitude: 10.0299,
             longitude: 105.7707,
-            radiusMeters: 80,
+            radiusMeters: 50, // Mặc định 50m
             startTime: "09:00 01/09/2026",
             endTime: "11:00 01/09/2026"
         }
     ]
 };
+
+// Hàm lấy danh sách hoạt động (ưu tiên localStorage, nếu không có lấy mặc định từ CONFIG)
+function getActivities() {
+    const local = localStorage.getItem("gps_attendance_activities");
+    if (local) {
+        try {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch (e) {
+            console.error("Lỗi parse dữ liệu activities từ localStorage, tiến hành reset", e);
+            localStorage.removeItem("gps_attendance_activities");
+        }
+    }
+    // Nếu chưa có trong local hoặc bị lỗi parse, khởi tạo bằng danh sách mặc định
+    localStorage.setItem("gps_attendance_activities", JSON.stringify(CONFIG.activities));
+    return CONFIG.activities;
+}
+
+// Hàm lưu danh sách hoạt động mới vào localStorage
+function saveActivities(list) {
+    localStorage.setItem("gps_attendance_activities", JSON.stringify(list));
+}
