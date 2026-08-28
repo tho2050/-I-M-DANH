@@ -337,6 +337,28 @@
                 attribution: '&copy; CartoDB'
             }).addTo(selectMap);
 
+            // Tự động tìm tên địa điểm từ tọa độ (Reverse Geocoding)
+            const reverseGeocode = (lat, lng) => {
+                const url = `https://photon.komoot.io/api/?lat=${lat}&lon=${lng}&limit=1`;
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.features && data.features.length > 0) {
+                            const f = data.features[0];
+                            const name = f.properties.name || '';
+                            const street = f.properties.street || '';
+                            const city = f.properties.city || f.properties.town || f.properties.county || '';
+                            const country = f.properties.country || '';
+                            const address = [name, street, city, country].filter(x => x).join(', ');
+                            
+                            if (address) {
+                                document.getElementById('newLocation').value = address;
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Lỗi ngược định vị:", err));
+            };
+
             selectMap.on('click', (e) => {
                 const lat = e.latlng.lat;
                 const lng = e.latlng.lng;
@@ -345,9 +367,13 @@
 
                 if (selectMarker) selectMarker.setLatLng(e.latlng);
                 else selectMarker = L.marker(e.latlng).addTo(selectMap);
+
+                // Điền tên địa chỉ tự động khi click bản đồ
+                reverseGeocode(lat, lng);
             });
 
             // Tự động tìm vị trí và chuyển ghim khi gõ/nhập tay tọa độ
+            let reverseGeocodeTimeout = null;
             const updateMapFromInputs = () => {
                 const lat = parseFloat(document.getElementById('newLat').value);
                 const lng = parseFloat(document.getElementById('newLng').value);
@@ -355,6 +381,12 @@
                     selectMap.setView([lat, lng], 16);
                     if (selectMarker) selectMarker.setLatLng([lat, lng]);
                     else selectMarker = L.marker([lat, lng]).addTo(selectMap);
+
+                    // Tra cứu địa chỉ tự động sau 800ms
+                    clearTimeout(reverseGeocodeTimeout);
+                    reverseGeocodeTimeout = setTimeout(() => {
+                        reverseGeocode(lat, lng);
+                    }, 800);
                 }
             };
             document.getElementById('newLat').addEventListener('input', updateMapFromInputs);
