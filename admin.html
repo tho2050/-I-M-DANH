@@ -233,11 +233,11 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Thời gian bắt đầu:</label>
-                                <input type="text" class="form-control" id="newStart" placeholder="VD: 07:00 27/08/2026" required />
+                                <input type="datetime-local" class="form-control" id="newStart" required />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Thời gian kết thúc:</label>
-                                <input type="text" class="form-control" id="newEnd" placeholder="VD: 17:00 27/08/2026" required />
+                                <input type="datetime-local" class="form-control" id="newEnd" required />
                             </div>
                         </div>
 
@@ -503,6 +503,29 @@
             `).join('');
         }
 
+        // Helpers convert datetime-local <-> hh:mm DD/MM/YYYY
+        function formatDateTimeLocalToFriendly(val) {
+            if (!val) return '';
+            const parts = val.split('T');
+            if (parts.length < 2) return val;
+            const datePart = parts[0]; // "2026-08-27"
+            const timePart = parts[1]; // "07:00"
+            const dParts = datePart.split('-');
+            if (dParts.length < 3) return val;
+            return `${timePart} ${dParts[2]}/${dParts[1]}/${dParts[0]}`;
+        }
+
+        function parseFriendlyToDateTimeLocal(val) {
+            if (!val) return '';
+            const parts = val.split(' ');
+            if (parts.length < 2) return '';
+            const timePart = parts[0]; // "07:00"
+            const datePart = parts[1]; // "27/08/2026"
+            const dParts = datePart.split('/');
+            if (dParts.length < 3) return '';
+            return `${dParts[2]}-${dParts[1]}-${dParts[0]}T${timePart}`;
+        }
+
         let editingIndex = -1; // -1 nếu là thêm mới, ngược lại là chỉ mục sự kiện đang chỉnh sửa
 
         function handleCreateActivity(e) {
@@ -515,8 +538,8 @@
                 description: document.getElementById('newDescription').value.trim(),
                 locationAddress: document.getElementById('newLocation').value.trim(),
                 radiusMeters: parseInt(document.getElementById('newRadius').value) || 50,
-                startTime: document.getElementById('newStart').value.trim(),
-                endTime: document.getElementById('newEnd').value.trim(),
+                startTime: formatDateTimeLocalToFriendly(document.getElementById('newStart').value),
+                endTime: formatDateTimeLocalToFriendly(document.getElementById('newEnd').value),
                 latitude: parseFloat(document.getElementById('newLat').value),
                 longitude: parseFloat(document.getElementById('newLng').value)
             };
@@ -581,8 +604,8 @@
             document.getElementById('newDescription').value = act.description || '';
             document.getElementById('newLocation').value = act.locationAddress || '';
             document.getElementById('newRadius').value = act.radiusMeters || 50;
-            document.getElementById('newStart').value = act.startTime || '';
-            document.getElementById('newEnd').value = act.endTime || '';
+            document.getElementById('newStart').value = parseFriendlyToDateTimeLocal(act.startTime);
+            document.getElementById('newEnd').value = parseFriendlyToDateTimeLocal(act.endTime);
             
             const lat = parseFloat(act.latitude) || 0;
             const lng = parseFloat(act.longitude) || 0;
