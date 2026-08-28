@@ -197,7 +197,7 @@
                                 <label class="form-label fw-bold small">Địa điểm tổ chức quy định:</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="newLocation" placeholder="VD: 195 Hà Huy Tập, Buôn Ma Thuột" required />
-                                    <button type="button" class="btn btn-primary" onclick="searchAddress()"><i class="fa-solid fa-magnifying-glass-location"></i> Tìm vị trí</button>
+                                    <button type="button" class="btn btn-primary" onclick="searchAddress(event)"><i class="fa-solid fa-magnifying-glass-location"></i> Tìm vị trí</button>
                                 </div>
                                 <div id="addressSuggestions" class="list-group shadow-sm position-absolute d-none" style="z-index: 1050; max-width: 500px;"></div>
                             </div>
@@ -322,7 +322,6 @@
             updateLocalhostWarning();
 
             renderActivities();
-            initSelectMap();
         }
 
         function switchTab(tabId) {
@@ -344,7 +343,9 @@
         function initSelectMap() {
             if (selectMap) return;
             selectMap = L.map('mapSelector').setView([10.7725, 106.6581], 6); // Việt Nam center
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(selectMap);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB'
+            }).addTo(selectMap);
 
             selectMap.on('click', (e) => {
                 const lat = e.latlng.lat;
@@ -422,14 +423,15 @@
             }
         }
 
-        async function searchAddress() {
+        async function searchAddress(e) {
+            if (e) e.preventDefault();
             const query = document.getElementById('newLocation').value.trim();
             if (!query) {
                 alert('Vui lòng nhập địa chỉ trước khi tìm kiếm.');
                 return;
             }
 
-            const btn = event ? event.currentTarget : null;
+            const btn = e ? e.currentTarget : null;
             let origHtml = '';
             if (btn) {
                 origHtml = btn.innerHTML;
@@ -524,9 +526,12 @@
             document.getElementById('tab-' + tabId).classList.remove('d-none');
 
             if (tabId === 'add-activity') {
+                initSelectMap();
                 setTimeout(() => {
-                    selectMap.invalidateSize();
-                }, 200);
+                    if (selectMap) {
+                        selectMap.invalidateSize();
+                    }
+                }, 250);
             } else if (tabId === 'attendance-list') {
                 fetchAttendanceData();
             }
