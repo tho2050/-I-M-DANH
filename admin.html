@@ -346,6 +346,19 @@
                 if (selectMarker) selectMarker.setLatLng(e.latlng);
                 else selectMarker = L.marker(e.latlng).addTo(selectMap);
             });
+
+            // Tự động tìm vị trí và chuyển ghim khi gõ/nhập tay tọa độ
+            const updateMapFromInputs = () => {
+                const lat = parseFloat(document.getElementById('newLat').value);
+                const lng = parseFloat(document.getElementById('newLng').value);
+                if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                    selectMap.setView([lat, lng], 16);
+                    if (selectMarker) selectMarker.setLatLng([lat, lng]);
+                    else selectMarker = L.marker([lat, lng]).addTo(selectMap);
+                }
+            };
+            document.getElementById('newLat').addEventListener('input', updateMapFromInputs);
+            document.getElementById('newLng').addEventListener('input', updateMapFromInputs);
         }
 
         function renderActivities() {
