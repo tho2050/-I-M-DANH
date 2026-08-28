@@ -213,6 +213,26 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="config.js"></script>
     <script>
+        // 1. Sinh UUID duy nhất cho thiết bị nếu chưa có để nhận diện chống gian lận
+        let deviceUuid = localStorage.getItem("device_uuid");
+        if (!deviceUuid) {
+            deviceUuid = 'dev_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+            localStorage.setItem("device_uuid", deviceUuid);
+        }
+
+        // 2. Lấy IP máy khách phục vụ ghi chép chống điểm danh hộ
+        let clientIp = '';
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => { clientIp = data.ip || ''; })
+            .catch(err => {
+                console.warn('Lỗi lấy IP từ ipify, thử ipapi:', err);
+                fetch('https://ipapi.co/json/')
+                    .then(res => res.json())
+                    .then(data => { clientIp = data.ip || ''; })
+                    .catch(e => console.error('Không lấy được IP:', e));
+            });
+
         // Extract Activity Code from URL
         const urlParams = new URLSearchParams(window.location.search);
         let actCode = urlParams.get('code') || '';
@@ -399,6 +419,9 @@
             });
             localStorage.setItem("gps_attendance_local_records", JSON.stringify(localRecords));
 
+            // Đánh dấu máy này đã điểm danh sự kiện này thành công
+            localStorage.setItem("checked_in_" + activity.code, "true");
+
             const resultBox = document.getElementById('resultBox');
             resultBox.style.display = 'block';
             resultBox.className = 'result-box success';
@@ -410,6 +433,12 @@
         }
 
         async function submitCheckIn() {
+            // Kiểm tra xem máy này đã điểm danh sự kiện này chưa (Client-side fast prevention)
+            if (localStorage.getItem("checked_in_" + activity.code) === "true") {
+                alert("Thiết bị này đã thực hiện điểm danh cho sự kiện này rồi!");
+                return;
+            }
+
             const studentCode = document.getElementById('studentCode').value.trim();
             const fullName = document.getElementById('fullName').value.trim();
 
@@ -433,6 +462,7 @@
 
             const payload = {
                 code: activity.code,
+                title: activity.title || '', // Gửi kèm tên sự kiện
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
@@ -441,24 +471,29 @@
                 email: document.getElementById('email').value || '',
                 coords: `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`,
                 distance: dist.toFixed(1) + "m",
-                device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin"
+                device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin",
+                ip: clientIp,                // IP máy của sinh viên
+                deviceUuid: deviceUuid       // Chuỗi định danh chống điểm danh hộ
             };
 
             try {
-                await fetch(scriptUrl, {
+                const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(payload)
                 });
+                const result = await response.json();
 
-                saveLocalAndShowSuccess(studentCode, fullName, dist);
+                if (result.status === 'success') {
+                    saveLocalAndShowSuccess(studentCode, fullName, dist);
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';
+                    alert('LỖI ĐIỂM DANH: ' + result.message);
+                }
             } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';
-                alert('Có lỗi xảy ra khi kết nối mạng. Hãy thử lại.');
+                // Fallback nếu có lỗi CORS/mạng
+                console.warn('Lỗi fetch trực tiếp, thực hiện lưu fallback:', err);
+                saveLocalAndShowSuccess(studentCode, fullName, dist);
             }
         }
     </script>

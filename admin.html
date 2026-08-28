@@ -863,7 +863,7 @@
 
             // Định dạng tiêu đề cột
             let csvContent = "\uFEFF"; // Byte Order Mark (BOM) để Excel đọc đúng tiếng Việt UTF-8
-            csvContent += "STT,Thời Gian,Mã Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Khoảng Cách,Thiết Bị,Tọa độ,Số Điện Thoại,Gmail\r\n";
+            csvContent += "STT,Thời Gian,Mã Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Khoảng Cách,Thiết Bị,Tọa độ sự kiện,Số Điện Thoại,Gmail,Tên Sự Kiện,IP Máy\r\n";
 
             filtered.forEach((item, idx) => {
                 const row = [
@@ -878,7 +878,9 @@
                     `"${item.device || ''}"`,
                     `"${item.coords || ''}"`,
                     `"${item.phoneNumber || ''}"`,
-                    `"${item.email || ''}"`
+                    `"${item.email || ''}"`,
+                    `"${item.title || ''}"`,
+                    `"${item.ip || ''}"`
                 ];
                 csvContent += row.join(",") + "\r\n";
             });
