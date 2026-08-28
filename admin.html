@@ -134,7 +134,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-primary me-2"></i>Danh sách sinh viên điểm danh</h5>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-success fw-bold" onclick="exportToExcel()"><i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel</button>
+                            <button class="btn btn-sm btn-success fw-bold" id="btnExportExcel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel</button>
                             <button class="btn btn-sm btn-outline-secondary" onclick="fetchAttendanceData()"><i class="fa-solid fa-rotate me-1"></i> Tải lại</button>
                         </div>
                     </div>
@@ -324,12 +324,19 @@
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value.trim().toLowerCase();
             
-            const allowedUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
-            // Hỗ trợ không phân biệt hoa thường và chấp nhận tên đăng nhập làm mật khẩu phòng hờ
-            const allowedPasswords = ["admin123", "nhung2011", "dhxdmtmuce"];
+            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
+            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
+            
+            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce"];
+            const allowedPasswordsStaff = ["admin123"];
 
-            if (allowedUsers.includes(user) && allowedPasswords.includes(pwd)) {
+            if (superUsers.includes(user) && (allowedPasswordsSuper.includes(pwd) || pwd === user)) {
                 sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_role", "super");
+                showDashboard();
+            } else if (staffUsers.includes(user) && (allowedPasswordsStaff.includes(pwd) || pwd === user)) {
+                sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_role", "staff");
                 showDashboard();
             } else {
                 document.getElementById('loginError').classList.remove('d-none');
@@ -365,6 +372,17 @@
             document.getElementById('adminDashboard').classList.remove('d-none');
             document.getElementById('btnLogout').classList.remove('d-none');
             
+            // Ẩn/Hiện nút xuất báo cáo Excel dựa theo vai trò tài khoản
+            const role = sessionStorage.getItem("admin_role");
+            const exportBtn = document.getElementById('btnExportExcel');
+            if (exportBtn) {
+                if (role === "staff") {
+                    exportBtn.style.display = 'none';
+                } else {
+                    exportBtn.style.display = 'inline-block';
+                }
+            }
+
             updateLocalhostWarning();
 
             renderActivities();
@@ -861,6 +879,12 @@
 
         // XUẤT FILE EXCEL (Dạng CSV UTF-8 hỗ trợ Excel không lỗi Tiếng Việt)
         function exportToExcel() {
+            const role = sessionStorage.getItem("admin_role");
+            if (role === "staff") {
+                alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
+                return;
+            }
+
             const searchQuery = document.getElementById('attendanceSearch').value.toLowerCase().trim();
             const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
 
