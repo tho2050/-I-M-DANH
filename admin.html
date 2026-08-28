@@ -963,14 +963,15 @@
             const currentPath = window.location.pathname;
             const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
 
-            // Mã hóa đầy đủ thông số vào URL QR code
+            // Mã hóa đầy đủ thông số vào URL QR code (gửi kèm qr=true để ẩn 3 nút điều hướng)
             const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html' 
                 + '?code=' + encodeURIComponent(code)
                 + '&title=' + encodeURIComponent(title)
                 + '&lat=' + lat
                 + '&lng=' + lng
                 + '&radius=' + radius
-                + '&loc=' + encodeURIComponent(loc);
+                + '&loc=' + encodeURIComponent(loc)
+                + '&qr=true';
 
             // 1. Cập nhật và tạo QR cho trang In Bản Mềm (hidden on-screen)
             document.getElementById('printTitle').textContent = title;

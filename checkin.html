@@ -84,8 +84,8 @@
                 <img src="logo.png" alt="MUCE Logo" style="height: 38px; background: white; padding: 3px 8px; border-radius: 6px;">
             </a>
             <div class="d-flex gap-1 gap-sm-2">
-                <a href="index.html" class="btn btn-sm btn-outline-light" title="Danh Sách Hoạt Động"><i class="fa-solid fa-calendar-days"></i><span class="d-none d-sm-inline ms-1"> Sự kiện</span></a>
-                <a href="admin.html" class="btn btn-sm btn-outline-warning" title="Trang Quản Trị"><i class="fa-solid fa-gears"></i><span class="d-none d-sm-inline ms-1"> Quản trị</span></a>
+                <a href="index.html" class="btn btn-sm btn-outline-light" id="btnEventHeader" title="Danh Sách Hoạt Động"><i class="fa-solid fa-calendar-days"></i><span class="d-none d-sm-inline ms-1"> Sự kiện</span></a>
+                <a href="admin.html" class="btn btn-sm btn-outline-warning" id="btnAdminHeader" title="Trang Quản Trị"><i class="fa-solid fa-gears"></i><span class="d-none d-sm-inline ms-1"> Quản trị</span></a>
             </div>
         </div>
     </div>
@@ -107,7 +107,7 @@
                         <span class="meta-item"><i class="fa-solid fa-bullseye"></i> Bán kính cho phép: <strong id="actRadius">---</strong></span>
                     </div>
                 </div>
-                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Danh Sách Sự Kiện</a>
+                <a href="index.html" class="btn btn-outline-secondary btn-sm" id="btnBackList"><i class="fa-solid fa-arrow-left"></i> Danh Sách Sự Kiện</a>
             </div>
         </div>
 
@@ -288,6 +288,17 @@
 
         // Init Map
         window.addEventListener('DOMContentLoaded', () => {
+            // Ẩn 3 nút điều hướng nếu quét QR (có tham số qr=true)
+            const isQr = urlParams.get('qr') === 'true';
+            if (isQr) {
+                const btnEventHeader = document.getElementById('btnEventHeader');
+                const btnAdminHeader = document.getElementById('btnAdminHeader');
+                const btnBackList = document.getElementById('btnBackList');
+                if (btnEventHeader) btnEventHeader.style.setProperty('display', 'none', 'important');
+                if (btnAdminHeader) btnAdminHeader.style.setProperty('display', 'none', 'important');
+                if (btnBackList) btnBackList.style.setProperty('display', 'none', 'important');
+            }
+
             try {
                 if (typeof L !== 'undefined') {
                     map = L.map('checkinMap').setView([targetLat, targetLng], 15);
