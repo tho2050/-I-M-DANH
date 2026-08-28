@@ -108,6 +108,9 @@
                     <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Xác Nhận Đăng Nhập</button>
                 </form>
                 <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
+                <div class="text-center mt-3 border-top pt-2">
+                    <a href="#" onclick="showRegisterForm(event)" class="small text-decoration-none text-secondary">Chưa có tài khoản? Đăng ký ngay</a>
+                </div>
             </div>
 
             <!-- FORM QUÊN MẬT KHẨU -->
@@ -134,6 +137,46 @@
                 </div>
                 
                 <div class="alert alert-success mt-3 py-2 small d-none text-break" id="forgotSuccessAlert"></div>
+
+                <div class="text-center mt-3 pt-2 border-top">
+                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
+                </div>
+            </div>
+
+            <!-- FORM ĐĂNG KÝ SỰ KIỆN -->
+            <div id="registerFormContainer" class="d-none">
+                <div class="text-center mb-3">
+                    <h5 class="fw-bold"><i class="fa-solid fa-user-plus text-success me-2"></i>Đăng Ký Tài Khoản</h5>
+                    <p class="text-muted small">Tạo tài khoản quản trị viên mới</p>
+                </div>
+                <form onsubmit="handleRegister(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
+                        <input type="text" class="form-control" id="regUsernameInput" placeholder="VD: hiennguyen" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Mật khẩu:</label>
+                        <input type="password" class="form-control" id="regPwdInput" placeholder="Nhập mật khẩu..." required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Vai trò (Quyền hạn):</label>
+                        <select class="form-select" id="regRoleSelect" onchange="toggleAdminCodeInput()" required>
+                            <option value="staff">Staff / Nhân viên (Hạn chế quyền xuất Excel)</option>
+                            <option value="super">Super Admin / Quản trị cấp cao (Toàn quyền)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Ô nhập mã bảo mật Admin -->
+                    <div class="mb-3 d-none" id="adminCodeContainer">
+                        <label class="form-label fw-bold small text-danger">Mã Admin bảo mật:</label>
+                        <input type="password" class="form-control border-danger" id="regAdminCodeInput" placeholder="Nhập mã xác nhận quản trị..." />
+                        <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Mã bảo mật của trường để cấp quyền Super Admin.</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnRegister">Đăng Ký Tài Khoản</button>
+                </form>
+                <div class="alert alert-danger mt-2 py-2 small d-none" id="regError"></div>
+                <div class="alert alert-success mt-2 py-2 small d-none" id="regSuccess">Đăng ký thành công! Bạn có thể quay lại đăng nhập.</div>
 
                 <div class="text-center mt-3 pt-2 border-top">
                     <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
@@ -370,11 +413,12 @@
                 .catch(err => console.error("Không lấy được IP server:", err));
         });
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value.trim().toLowerCase();
             
+            // 1. Kiểm tra tài khoản mặc định tĩnh trước (đăng nhập tức thì)
             const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
             const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
             
@@ -385,12 +429,42 @@
                 sessionStorage.setItem("admin_logged", "true");
                 sessionStorage.setItem("admin_role", "super");
                 showDashboard();
-            } else if (staffUsers.includes(user) && (allowedPasswordsStaff.includes(pwd) || pwd === user)) {
+                return;
+            }
+            if (staffUsers.includes(user) && (allowedPasswordsStaff.includes(pwd) || pwd === user)) {
                 sessionStorage.setItem("admin_logged", "true");
                 sessionStorage.setItem("admin_role", "staff");
                 showDashboard();
-            } else {
+                return;
+            }
+
+            // 2. Xác thực tài khoản động đăng ký lưu trên Google Sheet
+            const btn = e.submitter || document.querySelector('#loginFormContainer button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đăng nhập...';
+
+            try {
+                const response = await fetch(CONFIG.googleScriptUrl + '?action=login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: user, password: pwd })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_role", result.role);
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = result.message || "Tài khoản hoặc mật khẩu không chính xác!";
+                    document.getElementById('loginError').classList.remove('d-none');
+                }
+            } catch (err) {
+                document.getElementById('loginError').textContent = "Lỗi kết nối xác thực tài khoản từ Google Sheets!";
                 document.getElementById('loginError').classList.remove('d-none');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         }
 
@@ -418,11 +492,13 @@
             window.location.reload();
         }
 
-        // HIỂN THỊ CÁC KHUNG ĐĂNG NHẬP / QUÊN MẬT KHẨU
+        // HIỂN THỊ CÁC KHUNG ĐĂNG NHẬP / QUÊN MẬT KHẨU / ĐĂNG KÝ
         function showForgotPassword(e) {
             if (e) e.preventDefault();
             document.getElementById('loginFormContainer').classList.add('d-none');
             document.getElementById('forgotFormContainer').classList.remove('d-none');
+            document.getElementById('registerFormContainer').classList.add('d-none');
+            
             document.getElementById('forgotError').classList.add('d-none');
             document.getElementById('forgotSentAlert').classList.add('d-none');
             document.getElementById('otpInputContainer').classList.add('d-none');
@@ -439,7 +515,89 @@
             if (e) e.preventDefault();
             document.getElementById('loginFormContainer').classList.remove('d-none');
             document.getElementById('forgotFormContainer').classList.add('d-none');
+            document.getElementById('registerFormContainer').classList.add('d-none');
             document.getElementById('loginError').classList.add('d-none');
+        }
+
+        function showRegisterForm(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginFormContainer').classList.add('d-none');
+            document.getElementById('forgotFormContainer').classList.add('d-none');
+            document.getElementById('registerFormContainer').classList.remove('d-none');
+            
+            document.getElementById('regError').classList.add('d-none');
+            document.getElementById('regSuccess').classList.add('d-none');
+            document.getElementById('regUsernameInput').value = '';
+            document.getElementById('regPwdInput').value = '';
+            document.getElementById('regRoleSelect').value = 'staff';
+            toggleAdminCodeInput();
+        }
+
+        function toggleAdminCodeInput() {
+            const role = document.getElementById('regRoleSelect').value;
+            const container = document.getElementById('adminCodeContainer');
+            const input = document.getElementById('regAdminCodeInput');
+            if (role === 'super') {
+                container.classList.remove('d-none');
+                input.required = true;
+            } else {
+                container.classList.add('d-none');
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+        // ĐĂNG KÝ TÀI KHOẢN MỚI
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsernameInput').value.trim().toLowerCase();
+            const password = document.getElementById('regPwdInput').value.trim();
+            const role = document.getElementById('regRoleSelect').value;
+            const adminCode = document.getElementById('regAdminCodeInput').value.trim();
+            const btn = document.getElementById('btnRegister');
+            const errorEl = document.getElementById('regError');
+            const successEl = document.getElementById('regSuccess');
+
+            errorEl.classList.add('d-none');
+            successEl.classList.add('d-none');
+
+            // Nếu vai trò là Super Admin, kiểm tra mã xác thực Admin
+            if (role === 'super') {
+                const allowedAdminCodes = ["admin123", "nhung2011"];
+                if (!allowedAdminCodes.includes(adminCode)) {
+                    errorEl.textContent = "Mã Admin bảo mật không chính xác!";
+                    errorEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đăng ký...';
+
+            try {
+                const response = await fetch(CONFIG.googleScriptUrl + '?action=registerAccount', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: username, password: password, role: role })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    successEl.classList.remove('d-none');
+                    document.getElementById('regUsernameInput').value = '';
+                    document.getElementById('regPwdInput').value = '';
+                    document.getElementById('regAdminCodeInput').value = '';
+                } else {
+                    errorEl.textContent = result.message || "Không thể đăng ký tài khoản!";
+                    errorEl.classList.remove('d-none');
+                }
+            } catch (err) {
+                errorEl.textContent = "Lỗi kết nối máy chủ Google Sheets!";
+                errorEl.classList.remove('d-none');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Đăng Ký Tài Khoản';
+            }
         }
 
         // GỬI YÊU CẦU MÃ OTP VỀ EMAIL
