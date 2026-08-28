@@ -7,7 +7,7 @@ const CONFIG = {
     googleSheetUrl: "https://docs.google.com/spreadsheets/d/12IFrgjYT7qGWXe9lXtcE-oRrmz-BU9ga-m9nYacTlCA/edit",
 
     // Link Web App Google Apps Script để ghi và đọc dữ liệu điểm danh
-    googleScriptUrl: "",
+    googleScriptUrl: "https://script.google.com/macros/s/AKfycbwSbkgc3c2LHgZhyXeMHGl7Udpi8K7a6OKLWU35kJURDXDjxUlU-mNz8ycNWtpKOQ61/exec",
 
     // 2. DANH SÁCH CÁC SỰ KIỆN / HOẠT ĐỘNG MẶC ĐỊNH
     activities: [
