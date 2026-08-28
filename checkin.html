@@ -51,8 +51,8 @@
         .gps-alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
         .gps-alert.warning { background: #fffbeb; border: 1px solid #fed7aa; color: #92400e; }
         
-        .form-section label { font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px; }
-        .form-section .form-control { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; }
+        .form-section label { font-size: 13pt; font-weight: 600; color: #334155; margin-bottom: 6px; }
+        .form-section .form-control { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-size: 13pt; }
         .quick-samples { display: flex; gap: 6px; margin-top: 6px; margin-bottom: 1rem; }
         .quick-sample-btn { font-size: 0.75rem; padding: 4px 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; cursor: pointer; }
         
@@ -182,6 +182,20 @@
                             <div class="mb-3">
                                 <label>Lớp</label>
                                 <input type="text" class="form-control" id="className" placeholder="CNTT-K21A" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label>Khoa</label>
+                                <input type="text" class="form-control" id="faculty" placeholder="Công nghệ thông tin" disabled />
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label>Số điện thoại</label>
+                                    <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" disabled />
+                                </div>
+                                <div class="col-6">
+                                    <label>Email</label>
+                                    <input type="email" class="form-control" id="email" placeholder="sv@muce.edu.vn" disabled />
+                                </div>
                             </div>
 
                             <button class="btn-submit-checkin" id="btnSubmit" disabled onclick="submitCheckIn()">
@@ -377,7 +391,9 @@
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
-                faculty: '',
+                faculty: document.getElementById('faculty').value || '',
+                phoneNumber: document.getElementById('phoneNumber').value || '',
+                email: document.getElementById('email').value || '',
                 distance: dist.toFixed(1) + "m",
                 device: navigator.userAgent.includes("Mobi") ? "Điện Thoại Di Động" : "Thiết Bị Chạy Thử"
             });
@@ -420,9 +436,9 @@
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
-                faculty: '',
-                phoneNumber: '',
-                email: '',
+                faculty: document.getElementById('faculty').value || '',
+                phoneNumber: document.getElementById('phoneNumber').value || '',
+                email: document.getElementById('email').value || '',
                 coords: `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`,
                 distance: dist.toFixed(1) + "m",
                 device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin"
