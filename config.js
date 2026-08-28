@@ -4,27 +4,10 @@ const CONFIG = {
     adminPassword: "admin123",
 
     // Link Google Sheets kết quả (để Admin click xem trực tiếp)
-    googleSheetUrl: "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit",
+    googleSheetUrl: "https://docs.google.com/spreadsheets/d/12IFrgjYT7qGWXe9lXtcE-oRrmz-BU9ga-m9nYacTlCA/edit",
 
-    // Link CSV xuất bản web của Google Sheets (Publish to the Web -> CSV) để đồng bộ hiển thị và xuất file Excel
-    googleSheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/YOUR_PUBLISHED_ID/pub?gid=0&single=true&output=csv",
-
-    // 1. LINK GOOGLE FORM CỦA BẠN (Sử dụng link submit ngầm)
-    // Bạn sẽ thay thế link này và các Entry ID sau khi tạo Google Form
-    googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfD_YOUR_FORM_ID/formResponse",
-    
-    formFields: {
-        activityCode: "entry.111111111", // Thay bằng Entry ID tương ứng
-        studentCode: "entry.222222222",
-        fullName: "entry.333333333",
-        className: "entry.444444444",
-        faculty: "entry.555555555",
-        phoneNumber: "entry.666666666",
-        email: "entry.777777777",
-        gpsCoords: "entry.888888888", // Ví dụ: 10.7725, 106.6581
-        distance: "entry.999999999",  // Khoảng cách (mét)
-        deviceInfo: "entry.101010101"  // Thông tin thiết bị
-    },
+    // Link Web App Google Apps Script để ghi và đọc dữ liệu điểm danh
+    googleScriptUrl: "",
 
     // 2. DANH SÁCH CÁC SỰ KIỆN / HOẠT ĐỘNG MẶC ĐỊNH
     activities: [

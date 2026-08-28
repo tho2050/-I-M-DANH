@@ -451,6 +451,34 @@
             document.getElementById('fullName').value = name;
         }
 
+        function saveLocalAndShowSuccess(studentCode, fullName, dist) {
+            const btn = document.getElementById('btnSubmit');
+            const localRecords = localStorage.getItem("gps_attendance_local_records") 
+                ? JSON.parse(localStorage.getItem("gps_attendance_local_records")) 
+                : [];
+            
+            localRecords.unshift({
+                timestamp: new Date().toLocaleString('vi-VN'),
+                code: activity.code,
+                studentCode: studentCode,
+                name: fullName,
+                className: document.getElementById('className').value || '',
+                faculty: document.getElementById('faculty').value || '',
+                distance: dist.toFixed(1) + "m",
+                device: navigator.userAgent.includes("Mobi") ? "Điện Thoại Di Động" : "Thiết Bị Chạy Thử"
+            });
+            localStorage.setItem("gps_attendance_local_records", JSON.stringify(localRecords));
+
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box success';
+            resultBox.innerHTML = `<h5>🎉 Điểm danh THÀNH CÔNG!</h5>
+                <p class="mb-0">Dữ liệu của sinh viên <strong>${fullName} (${studentCode})</strong> đã được ghi nhận trực tiếp vào Bảng tính Google Sheets của Ban tổ chức.</p>`;
+            
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> ĐÃ HOÀN TẤT ĐIỂM DANH';
+            document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = true);
+        }
+
         async function submitCheckIn() {
             const studentCode = document.getElementById('studentCode').value.trim();
             const fullName = document.getElementById('fullName').value.trim();
@@ -466,54 +494,37 @@
 
             const dist = haversine(userLat, userLng, targetLat, targetLng);
 
-            // Gửi dữ liệu lên Google Sheets thông qua Google Form API ngầm
-            const formUrl = CONFIG.googleFormUrl;
-            const formData = new FormData();
-            
-            formData.append(CONFIG.formFields.activityCode, activity.code);
-            formData.append(CONFIG.formFields.studentCode, studentCode);
-            formData.append(CONFIG.formFields.fullName, fullName);
-            formData.append(CONFIG.formFields.className, document.getElementById('className').value);
-            formData.append(CONFIG.formFields.faculty, document.getElementById('faculty').value);
-            formData.append(CONFIG.formFields.phoneNumber, document.getElementById('phoneNumber').value);
-            formData.append(CONFIG.formFields.email, document.getElementById('email').value);
-            formData.append(CONFIG.formFields.gpsCoords, `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`);
-            formData.append(CONFIG.formFields.distance, dist.toFixed(1) + "m");
-            formData.append(CONFIG.formFields.deviceInfo, navigator.userAgent);
+            const scriptUrl = CONFIG.googleScriptUrl;
+            if (!scriptUrl) {
+                // Fallback nếu chưa cấu hình script Url
+                saveLocalAndShowSuccess(studentCode, fullName, dist);
+                return;
+            }
+
+            const payload = {
+                code: activity.code,
+                studentCode: studentCode,
+                name: fullName,
+                className: document.getElementById('className').value || '',
+                faculty: document.getElementById('faculty').value || '',
+                phoneNumber: document.getElementById('phoneNumber').value || '',
+                email: document.getElementById('email').value || '',
+                coords: `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`,
+                distance: dist.toFixed(1) + "m",
+                device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin"
+            };
 
             try {
-                await fetch(formUrl, {
+                await fetch(scriptUrl, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 });
 
-                // Lưu cục bộ vào localStorage để admin.html đồng bộ tức thì
-                const localRecords = localStorage.getItem("gps_attendance_local_records") 
-                    ? JSON.parse(localStorage.getItem("gps_attendance_local_records")) 
-                    : [];
-                
-                localRecords.unshift({
-                    timestamp: new Date().toLocaleString('vi-VN'),
-                    code: activity.code,
-                    studentCode: studentCode,
-                    name: fullName,
-                    className: document.getElementById('className').value || '',
-                    faculty: document.getElementById('faculty').value || '',
-                    distance: dist.toFixed(1) + "m",
-                    device: "Thiết Bị Chạy Thử"
-                });
-                localStorage.setItem("gps_attendance_local_records", JSON.stringify(localRecords));
-
-                // Google Form no-cors gửi thành công
-                const resultBox = document.getElementById('resultBox');
-                resultBox.style.display = 'block';
-                resultBox.className = 'result-box success';
-                resultBox.innerHTML = `<h5>🎉 Điểm danh THÀNH CÔNG!</h5>
-                    <p class="mb-0">Dữ liệu của sinh viên <strong>${fullName} (${studentCode})</strong> đã được ghi nhận trực tiếp vào Bảng tính Google Sheets của Ban tổ chức.</p>`;
-                
-                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> ĐÃ HOÀN TẤT ĐIỂM DANH';
-                document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = true);
+                saveLocalAndShowSuccess(studentCode, fullName, dist);
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';

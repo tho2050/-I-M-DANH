@@ -531,7 +531,9 @@
             } else if (tabId === 'attendance-list') {
                 fetchAttendanceData();
             }
-        }        // TẢI DỮ LIỆU ĐIỂM DANH TỪ GOOGLE SHEET VÀ CẢ LOCALSTORAGE
+        }
+
+        // TẢI DỮ LIỆU ĐIỂM DANH TỪ GOOGLE SHEET VÀ CẢ LOCALSTORAGE
         async function fetchAttendanceData() {
             const tbody = document.getElementById('attendanceTableBody');
             tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu điểm danh...</td></tr>`;
@@ -549,9 +551,9 @@
                 ? JSON.parse(localStorage.getItem("gps_attendance_local_records"))
                 : [];
 
-            // 1. Kiểm tra cấu hình Google Sheets Csv Url
-            const csvUrl = CONFIG.googleSheetCsvUrl;
-            const hasRealConfig = csvUrl && !csvUrl.includes('YOUR_PUBLISHED_ID');
+            // Kiểm tra cấu hình Google Script Url
+            const scriptUrl = CONFIG.googleScriptUrl;
+            const hasRealConfig = scriptUrl && scriptUrl.trim() !== "";
 
             if (!hasRealConfig) {
                 // Tự động nạp Dữ liệu mẫu (Mock data) gộp với LocalStorage để chạy thử
@@ -569,20 +571,20 @@
                 return;
             }
 
-            // 2. Nếu có link thật, fetch và parse CSV, sau đó gộp với LocalStorage
+            // Nếu có link thật, fetch JSON trực tiếp từ Google Apps Script Web App
             try {
-                const res = await fetch(csvUrl);
-                const csvText = await res.text();
-                const sheetData = parseCsvData(csvText);
+                const res = await fetch(scriptUrl);
+                const sheetData = await res.json();
                 attendanceData = [...localRecords, ...sheetData];
                 renderAttendanceTable(attendanceData);
             } catch (err) {
-                console.error("Lỗi khi fetch Google Sheet CSV", err);
+                console.error("Lỗi khi fetch dữ liệu từ Google Apps Script", err);
                 // Nếu lỗi, vẫn hiển thị các bản ghi cục bộ đã lưu
                 attendanceData = localRecords;
                 renderAttendanceTable(attendanceData);
             }
         }
+
         // PARSE CSV THÀNH ARRAY OBJECT
         function parseCsvData(csvText) {
             const lines = csvText.split('\n');
