@@ -734,7 +734,9 @@
             if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && serverIp && serverIp !== 'localhost') {
                 baseOrigin = `http://${serverIp}:5252`;
             }
-            const checkinUrl = baseOrigin + window.location.pathname.replace('admin.html', 'checkin.html') + '?code=' + encodeURIComponent(code);
+            const currentPath = window.location.pathname;
+            const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html?code=' + encodeURIComponent(code);
 
             new QRCode(container, {
                 text: checkinUrl,
