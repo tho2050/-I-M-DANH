@@ -763,7 +763,22 @@
             }
             const currentPath = window.location.pathname;
             const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-            const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html?code=' + encodeURIComponent(code);
+            
+            // Tìm sự kiện trong danh sách để lấy tọa độ và địa điểm
+            const list = getActivities();
+            const act = list.find(a => a.code === code);
+            const lat = act ? act.latitude : 0;
+            const lng = act ? act.longitude : 0;
+            const loc = act ? act.locationAddress : '';
+
+            // Mã hóa đầy đủ thông số vào URL QR code
+            const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html' 
+                + '?code=' + encodeURIComponent(code)
+                + '&title=' + encodeURIComponent(title)
+                + '&lat=' + lat
+                + '&lng=' + lng
+                + '&radius=' + radius
+                + '&loc=' + encodeURIComponent(loc);
 
             new QRCode(container, {
                 text: checkinUrl,
