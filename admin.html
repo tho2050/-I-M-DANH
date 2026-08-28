@@ -225,15 +225,11 @@
 
                         <div id="mapSelector"></div>
 
-                        <div class="row g-3 mb-4">
-                            <div class="col-6">
-                                <label class="form-label fw-bold small">Vĩ độ (Latitude):</label>
-                                <input type="number" step="any" class="form-control" id="newLat" placeholder="10.7725" required />
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label fw-bold small">Kinh độ (Longitude):</label>
-                                <input type="number" step="any" class="form-control" id="newLng" placeholder="106.6581" required />
-                            </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small">Tọa độ GPS (Vĩ độ, Kinh độ):</label>
+                            <input type="text" class="form-control" id="newCoords" placeholder="VD: 21.028511, 105.8542" required />
+                            <input type="hidden" id="newLat" />
+                            <input type="hidden" id="newLng" />
                         </div>
 
                         <button type="submit" class="btn btn-success w-100 fw-bold py-2"><i class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh</button>
@@ -364,6 +360,7 @@
                 const lng = e.latlng.lng;
                 document.getElementById('newLat').value = lat.toFixed(6);
                 document.getElementById('newLng').value = lng.toFixed(6);
+                document.getElementById('newCoords').value = lat.toFixed(6) + ", " + lng.toFixed(6);
 
                 if (selectMarker) selectMarker.setLatLng(e.latlng);
                 else selectMarker = L.marker(e.latlng).addTo(selectMap);
@@ -372,25 +369,33 @@
                 reverseGeocode(lat, lng);
             });
 
-            // Tự động tìm vị trí và chuyển ghim khi gõ/nhập tay tọa độ
+            // Tự động tìm vị trí và chuyển ghim khi gõ/nhập tay tọa độ gộp
             let reverseGeocodeTimeout = null;
             const updateMapFromInputs = () => {
-                const lat = parseFloat(document.getElementById('newLat').value);
-                const lng = parseFloat(document.getElementById('newLng').value);
-                if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                    selectMap.setView([lat, lng], 16);
-                    if (selectMarker) selectMarker.setLatLng([lat, lng]);
-                    else selectMarker = L.marker([lat, lng]).addTo(selectMap);
+                const val = document.getElementById('newCoords').value;
+                const matches = val.match(/[-+]?[0-9]*\.?[0-9]+/g);
+                if (matches && matches.length >= 2) {
+                    const lat = parseFloat(matches[0]);
+                    const lng = parseFloat(matches[1]);
+                    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        // Cập nhật các input ẩn phục vụ submit form
+                        document.getElementById('newLat').value = lat.toFixed(6);
+                        document.getElementById('newLng').value = lng.toFixed(6);
 
-                    // Tra cứu địa chỉ tự động sau 800ms
-                    clearTimeout(reverseGeocodeTimeout);
-                    reverseGeocodeTimeout = setTimeout(() => {
-                        reverseGeocode(lat, lng);
-                    }, 800);
+                        // Cập nhật vị trí bản đồ
+                        selectMap.setView([lat, lng], 16);
+                        if (selectMarker) selectMarker.setLatLng([lat, lng]);
+                        else selectMarker = L.marker([lat, lng]).addTo(selectMap);
+
+                        // Tra cứu địa chỉ tự động sau 800ms
+                        clearTimeout(reverseGeocodeTimeout);
+                        reverseGeocodeTimeout = setTimeout(() => {
+                            reverseGeocode(lat, lng);
+                        }, 800);
+                    }
                 }
             };
-            document.getElementById('newLat').addEventListener('input', updateMapFromInputs);
-            document.getElementById('newLng').addEventListener('input', updateMapFromInputs);
+            document.getElementById('newCoords').addEventListener('input', updateMapFromInputs);
         }
 
         function renderActivities() {
@@ -538,6 +543,7 @@
 
             document.getElementById('newLat').value = latitude.toFixed(6);
             document.getElementById('newLng').value = longitude.toFixed(6);
+            document.getElementById('newCoords').value = latitude.toFixed(6) + ", " + longitude.toFixed(6);
             
             // Cập nhật ô nhập địa chỉ bằng tên đầy đủ đề xuất
             document.getElementById('newLocation').value = displayName;
