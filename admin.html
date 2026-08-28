@@ -112,7 +112,6 @@
                     <a href="#" class="active" onclick="switchTab('manage-activities')" id="menu-manage"><i class="fa-solid fa-calendar-days"></i> Quản lý sự kiện</a>
                     <a href="#" onclick="switchTab('add-activity')" id="menu-add"><i class="fa-solid fa-plus-circle"></i> Thêm sự kiện mới</a>
                     <a href="#" onclick="switchTab('attendance-list')" id="menu-attendance"><i class="fa-solid fa-users-viewfinder"></i> Danh sách điểm danh</a>
-                    <a href="#" id="sheetLink" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-table"></i> Xem Trang Tính Báo Cáo</a>
                 </div>
             </div>
 
@@ -302,11 +301,7 @@
                 showDashboard();
             }
             
-            // Gán link trang tính từ config vào nút Sidebar
-            const sheetLink = document.getElementById('sheetLink');
-            if (sheetLink && CONFIG.googleSheetUrl) {
-                sheetLink.href = CONFIG.googleSheetUrl;
-            }
+
             
             // Lấy IP nội bộ của server để tạo QR hoạt động được trên điện thoại
             fetch('/api/server-info')
