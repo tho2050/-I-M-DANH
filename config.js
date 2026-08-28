@@ -84,7 +84,7 @@ function syncActivitiesFromCloud(callback) {
     fetch(CONFIG.googleScriptUrl + "?action=getActivities")
         .then(res => res.json())
         .then(data => {
-            if (Array.isArray(data)) {
+            if (Array.isArray(data) && data.length > 0) {
                 localStorage.setItem("gps_attendance_activities", JSON.stringify(data));
                 if (callback) callback(data);
             }
