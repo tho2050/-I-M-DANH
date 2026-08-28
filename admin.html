@@ -302,6 +302,12 @@
                 showDashboard();
             }
             
+            // Gán link trang tính từ config vào nút Sidebar
+            const sheetLink = document.getElementById('sheetLink');
+            if (sheetLink && CONFIG.googleSheetUrl) {
+                sheetLink.href = CONFIG.googleSheetUrl;
+            }
+            
             // Lấy IP nội bộ của server để tạo QR hoạt động được trên điện thoại
             fetch('/api/server-info')
                 .then(res => res.json())
