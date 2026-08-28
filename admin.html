@@ -673,10 +673,14 @@
             const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
 
             const filtered = attendanceData.filter(item => {
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery) ||
-                                      item.studentCode.toLowerCase().includes(searchQuery) ||
-                                      item.className.toLowerCase().includes(searchQuery);
-                const matchesActivity = !actFilter || item.code.toLowerCase() === actFilter;
+                const nameStr = String(item.name || '');
+                const codeStr = String(item.studentCode || '');
+                const classStr = String(item.className || '');
+                const actCodeStr = String(item.code || '');
+                const matchesSearch = nameStr.toLowerCase().includes(searchQuery) ||
+                                      codeStr.toLowerCase().includes(searchQuery) ||
+                                      classStr.toLowerCase().includes(searchQuery);
+                const matchesActivity = !actFilter || actCodeStr.toLowerCase() === actFilter;
                 return matchesSearch && matchesActivity;
             });
 
@@ -689,10 +693,14 @@
             const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
 
             const filtered = attendanceData.filter(item => {
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery) ||
-                                      item.studentCode.toLowerCase().includes(searchQuery) ||
-                                      item.className.toLowerCase().includes(searchQuery);
-                const matchesActivity = !actFilter || item.code.toLowerCase() === actFilter;
+                const nameStr = String(item.name || '');
+                const codeStr = String(item.studentCode || '');
+                const classStr = String(item.className || '');
+                const actCodeStr = String(item.code || '');
+                const matchesSearch = nameStr.toLowerCase().includes(searchQuery) ||
+                                      codeStr.toLowerCase().includes(searchQuery) ||
+                                      classStr.toLowerCase().includes(searchQuery);
+                const matchesActivity = !actFilter || actCodeStr.toLowerCase() === actFilter;
                 return matchesSearch && matchesActivity;
             });
 

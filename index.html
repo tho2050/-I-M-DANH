@@ -320,9 +320,9 @@
 
                 grid.innerHTML = list.map(item => `
                     <div class="col-md-6 col-lg-4 activity-item" 
-                         data-title="${item.title.toLowerCase()}" 
-                         data-code="${item.code.toLowerCase()}"
-                         data-location="${item.locationAddress.toLowerCase()}"
+                         data-title="${String(item.title || '').toLowerCase()}" 
+                         data-code="${String(item.code || '').toLowerCase()}"
+                         data-location="${String(item.locationAddress || '').toLowerCase()}"
                          data-lat="${item.latitude}" 
                          data-lng="${item.longitude}">
                         <div class="activity-card">
