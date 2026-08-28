@@ -256,7 +256,6 @@
                 </a>
                 <div class="d-flex gap-1 gap-sm-2">
                     <a href="index.html" class="nav-link active" title="Danh Sách Hoạt Động"><i class="fa-solid fa-calendar-days"></i><span class="d-none d-sm-inline ms-1"> Sự kiện</span></a>
-                    <a href="scan.html" class="nav-link" title="Quét QR Camera"><i class="fa-solid fa-qrcode"></i><span class="d-none d-sm-inline ms-1"> Quét QR</span></a>
                     <a href="admin.html" class="nav-link text-warning" title="Trang Quản Trị"><i class="fa-solid fa-gears"></i><span class="d-none d-sm-inline ms-1"> Quản trị</span></a>
                 </div>
             </div>
@@ -273,12 +272,9 @@
                         Chọn hoạt động bạn đang tham gia để xác thực vị trí GPS và tự động gửi dữ liệu điểm danh trực tiếp về Google Sheets.
                     </p>
                     <div class="d-flex flex-wrap gap-3 mb-4">
-                        <a href="scan.html" class="btn btn-hero-primary">
-                            <i class="fa-solid fa-qrcode me-2"></i> Quét Mã QR
-                        </a>
-                        <button class="btn btn-hero-outline" onclick="requestUserLocation()">
+                        <button class="btn btn-hero-primary" onclick="requestUserLocation()">
                             <i class="fa-solid fa-location-crosshairs me-2"></i>
-                            <span id="gpsStatusText">GPS Thiết Bị</span>
+                            <span id="gpsStatusText">Kiểm tra định vị GPS</span>
                         </button>
                     </div>
                 </div>
