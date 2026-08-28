@@ -1,0 +1,13 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/Activity/CheckIn/:path*",
+      "destination": "/checkin.html"
+    },
+    {
+      "source": "/checkin/:path*",
+      "destination": "/checkin.html"
+    }
+  ]
+}

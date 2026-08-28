@@ -20,6 +20,25 @@
         .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: #475569; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; }
         .sidebar-menu a:hover, .sidebar-menu a.active { background: #f1f5f9; color: #1a4b8c; }
         
+        @media (max-width: 767.98px) {
+            .sidebar-menu {
+                display: flex;
+                overflow-x: auto;
+                white-space: nowrap;
+                gap: 8px;
+                padding: 0.5rem;
+                margin-bottom: 1rem;
+                border-radius: 10px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .sidebar-menu a {
+                margin-bottom: 0;
+                flex: 0 0 auto;
+                padding: 8px 12px;
+                font-size: 0.82rem;
+            }
+        }
+        
         #mapSelector { height: 280px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
         .activity-item-row { border-bottom: 1px solid #e2e8f0; padding: 12px 0; }
         .activity-item-row:last-child { border-bottom: none; }
@@ -37,13 +56,13 @@
 
     <!-- NAV BAR -->
     <nav class="navbar navbar-custom">
-        <div class="container d-flex justify-content-between">
-            <a class="navbar-brand" href="index.html">
-                <i class="fa-solid fa-gears"></i> Trang Quản Trị Hệ Thống Điểm Danh
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-truncate" href="index.html" style="max-width: 65%;">
+                <i class="fa-solid fa-gears"></i> <span class="d-none d-sm-inline">Quản Trị Điểm Danh</span><span class="d-inline d-sm-none">Admin</span>
             </a>
-            <div class="d-flex gap-2">
-                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-house me-1"></i>Về Trang Chủ</a>
-                <button class="btn btn-sm btn-danger d-none" id="btnLogout" onclick="logout()"><i class="fa-solid fa-sign-out me-1"></i>Đăng xuất</button>
+            <div class="d-flex gap-1 gap-sm-2">
+                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-house"></i><span class="d-none d-sm-inline ms-1">Trang Chủ</span></a>
+                <button class="btn btn-sm btn-danger d-none" id="btnLogout" onclick="logout()"><i class="fa-solid fa-sign-out"></i><span class="d-none d-sm-inline ms-1">Thoát</span></button>
             </div>
         </div>
     </nav>
@@ -69,6 +88,22 @@
 
     <!-- MAIN ADMIN PANEL -->
     <div class="container py-4 d-none" id="adminDashboard">
+        <!-- Localhost Warning Banner -->
+        <div class="alert alert-warning shadow-sm border-start border-warning border-4 mb-4" id="localhostWarning" style="display:none;">
+            <div class="d-flex align-items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-warning" style="font-size: 1.5rem; margin-top: 3px;"></i>
+                <div>
+                    <h6 class="mb-1 fw-bold text-dark">Bạn đang truy cập qua Localhost</h6>
+                    <p class="mb-0 small text-muted">
+                        Mã QR được in ra sẽ chứa địa chỉ <code>localhost</code>. Khi sinh viên quét bằng điện thoại sẽ <strong>bị báo lỗi không truy cập được</strong>.
+                    </p>
+                    <p class="mb-0 mt-2 small text-muted">
+                        <strong>Cách khắc phục:</strong> Kết nối điện thoại và máy tính vào <strong>cùng mạng Wi-Fi</strong>. Tìm địa chỉ IP của máy tính (ví dụ: <code>192.168.1.15</code>), sau đó trên trình duyệt máy tính, hãy truy cập Admin qua đường dẫn IP đó: <code>http://[IP-của-máy]:5252/admin.html</code> rồi tiến hành in mã QR.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <div class="row g-4">
             <!-- Sidebar -->
             <div class="col-md-3">
@@ -222,6 +257,7 @@
     <script src="config.js"></script>
     <script>
         let selectMap, selectMarker;
+        let serverIp = 'localhost';
 
         // Check login state
         window.addEventListener('DOMContentLoaded', () => {
@@ -229,6 +265,17 @@
             if (isLogged === "true") {
                 showDashboard();
             }
+            
+            // Lấy IP nội bộ của server để tạo QR hoạt động được trên điện thoại
+            fetch('/api/server-info')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.localIp) {
+                        serverIp = data.localIp;
+                        updateLocalhostWarning();
+                    }
+                })
+                .catch(err => console.error("Không lấy được IP server:", err));
         });
 
         function handleLogin(e) {
@@ -242,6 +289,25 @@
             }
         }
 
+        // Cập nhật cảnh báo localhost và gợi ý link IP
+        function updateLocalhostWarning() {
+            const hostname = window.location.hostname;
+            const warningEl = document.getElementById('localhostWarning');
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                warningEl.style.display = 'block';
+                if (serverIp && serverIp !== 'localhost') {
+                    const ipLink = `http://${serverIp}:5252/admin.html`;
+                    const pElements = warningEl.querySelectorAll('p');
+                    if (pElements.length >= 2) {
+                        pElements[0].innerHTML = `Mã QR được in ra sẽ tự động chứa địa chỉ IP của máy tính để điện thoại quét được: <strong>${serverIp}</strong>. Để thuận tiện quản lý, khuyên dùng bạn nên truy cập trực tiếp bằng địa chỉ IP này.`;
+                        pElements[1].innerHTML = `<strong>Đường dẫn truy cập khuyên dùng (cùng Wi-Fi):</strong><br><a href="${ipLink}" class="btn btn-sm btn-warning mt-2 fw-bold px-3 py-2" style="text-decoration:none; color: #1e293b;"><i class="fa-solid fa-right-to-bracket me-2"></i>Chuyển sang trang quản trị IP: ${ipLink}</a>`;
+                    }
+                }
+            } else {
+                warningEl.style.display = 'none';
+            }
+        }
+
         function logout() {
             sessionStorage.removeItem("admin_logged");
             window.location.reload();
@@ -252,6 +318,9 @@
             document.getElementById('adminDashboard').classList.remove('d-none');
             document.getElementById('btnLogout').classList.remove('d-none');
             document.getElementById('sheetLink').href = CONFIG.googleSheetUrl;
+            
+            updateLocalhostWarning();
+
             renderActivities();
             initSelectMap();
         }
@@ -649,6 +718,11 @@
         }
 
         function printQr(code, title, radius) {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                const proceed = confirm(`CẢNH BÁO LOCALHOST:\nBạn đang in QR từ địa chỉ "localhost". Điện thoại quét mã này sẽ KHÔNG THỂ truy cập được.\n\nHệ thống sẽ tự động đổi link trong mã QR sang địa chỉ IP máy tính của bạn: ${serverIp} để điện thoại quét được.\n\nBạn có muốn tiếp tục in không?`);
+                if (!proceed) return;
+            }
+
             document.getElementById('printTitle').textContent = title;
             document.getElementById('printCode').textContent = 'MÃ SỰ KIỆN: ' + code;
             document.getElementById('printRadius').textContent = radius + 'm';
@@ -656,7 +730,11 @@
             const container = document.getElementById('printQrContainer');
             container.innerHTML = '';
 
-            const checkinUrl = window.location.origin + window.location.pathname.replace('admin.html', 'checkin.html') + '?code=' + encodeURIComponent(code);
+            let baseOrigin = window.location.origin;
+            if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && serverIp && serverIp !== 'localhost') {
+                baseOrigin = `http://${serverIp}:5252`;
+            }
+            const checkinUrl = baseOrigin + window.location.pathname.replace('admin.html', 'checkin.html') + '?code=' + encodeURIComponent(code);
 
             new QRCode(container, {
                 text: checkinUrl,

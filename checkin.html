@@ -66,16 +66,25 @@
         .test-mode-panel { display: none; }
         .test-mode-panel.active { display: block; }
         .device-mode-panel.hidden { display: none; }
+
+        @media (max-width: 576px) {
+            .activity-header { padding: 1rem 1.25rem; }
+            .activity-header h1 { font-size: 1.3rem; }
+            .panel-body { padding: 1rem; }
+            .panel-header { padding: 0.8rem 1rem; }
+            .btn-gps-verify, .btn-submit-checkin { padding: 10px; font-size: 0.85rem; }
+            #checkinMap { height: 220px; }
+        }
     </style>
 </head>
 <body>
     <div class="top-bar">
         <div class="container d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i>GPS Attendance</h5>
-            <div class="d-flex gap-2">
-                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-calendar-days me-1"></i> Danh Sách Hoạt Động</a>
-                <a href="scan.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-qrcode me-1"></i> Quét QR Camera</a>
-                <a href="admin.html" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-gears me-1"></i> Trang Quản Trị</a>
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-1"></i><span class="d-none d-sm-inline">GPS Attendance</span></h5>
+            <div class="d-flex gap-1 gap-sm-2">
+                <a href="index.html" class="btn btn-sm btn-outline-light" title="Danh Sách Hoạt Động"><i class="fa-solid fa-calendar-days"></i><span class="d-none d-sm-inline ms-1"> Sự kiện</span></a>
+                <a href="scan.html" class="btn btn-sm btn-outline-light" title="Quét QR Camera"><i class="fa-solid fa-qrcode"></i><span class="d-none d-sm-inline ms-1"> Quét QR</span></a>
+                <a href="admin.html" class="btn btn-sm btn-outline-warning" title="Trang Quản Trị"><i class="fa-solid fa-gears"></i><span class="d-none d-sm-inline ms-1"> Quản trị</span></a>
             </div>
         </div>
     </div>
@@ -196,21 +205,21 @@
                                 <input type="text" class="form-control" id="fullName" placeholder="Nguyễn Văn An" disabled />
                             </div>
                             <div class="row g-3 mb-3">
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <label>Lớp</label>
                                     <input type="text" class="form-control" id="className" placeholder="CNTT-K21A" disabled />
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <label>Khoa</label>
                                     <input type="text" class="form-control" id="faculty" placeholder="Công nghệ thông tin" disabled />
                                 </div>
                             </div>
                             <div class="row g-3 mb-3">
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <label>Số điện thoại</label>
                                     <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" disabled />
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <label>Email</label>
                                     <input type="email" class="form-control" id="email" placeholder="sv@@muce.edu.vn" disabled />
                                 </div>
