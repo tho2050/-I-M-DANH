@@ -588,8 +588,8 @@
 
             editingIndex = idx;
 
-            // Chuyển tab sang tab Thêm/Sửa
-            switchTab('add-activity');
+            // Chuyển tab sang tab Thêm/Sửa (đánh dấu là chuyển hướng tự động bằng tham số true)
+            switchTab('add-activity', true);
 
             // Đổi tiêu đề tab và nút bấm
             document.getElementById('addTabHeader').innerHTML = '<i class="fa-solid fa-pencil me-2 text-info"></i>Chỉnh sửa thông tin sự kiện';
@@ -731,7 +731,7 @@
 
         let attendanceData = []; // Lưu trữ dữ liệu điểm danh toàn cục
 
-        function switchTab(tabId) {
+        function switchTab(tabId, isProgrammatic = false) {
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
             
             // Highlight menu tương ứng
@@ -746,7 +746,7 @@
             document.getElementById('tab-' + tabId).classList.remove('d-none');
 
             if (tabId === 'add-activity') {
-                if (editingIndex !== -1) {
+                if (editingIndex !== -1 && !isProgrammatic) {
                     // Nếu click thủ công menu mà đang dở việc sửa -> Hủy sửa để tạo mới
                     editingIndex = -1;
                     document.getElementById('newCode').disabled = false;
@@ -755,9 +755,11 @@
                     if (selectMarker && selectMap) selectMap.removeLayer(selectMarker);
                 }
                 
-                // Khôi phục chữ ban đầu
-                document.getElementById('addTabHeader').innerHTML = '<i class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo sự kiện điểm danh mới';
-                document.getElementById('btnSubmitEvent').innerHTML = '<i class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh';
+                // Khôi phục chữ ban đầu nếu không phải chế độ sửa đổi
+                if (editingIndex === -1) {
+                    document.getElementById('addTabHeader').innerHTML = '<i class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo sự kiện điểm danh mới';
+                    document.getElementById('btnSubmitEvent').innerHTML = '<i class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh';
+                }
 
                 initSelectMap();
                 setTimeout(() => {
