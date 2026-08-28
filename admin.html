@@ -324,9 +324,9 @@
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value.trim().toLowerCase();
             
-            const allowedUsers = ["hongnhung@muce.edu.vn", "dhxdmt", "dhxdmtmuce"];
+            const allowedUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
             // Hỗ trợ không phân biệt hoa thường và chấp nhận tên đăng nhập làm mật khẩu phòng hờ
-            const allowedPasswords = ["admin123", "nhung2011", "dhxdmt", "dhxdmtmuce"];
+            const allowedPasswords = ["admin123", "nhung2011", "dhxdmtmuce"];
 
             if (allowedUsers.includes(user) && allowedPasswords.includes(pwd)) {
                 sessionStorage.setItem("admin_logged", "true");
