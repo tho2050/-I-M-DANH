@@ -1021,7 +1021,7 @@
             new QRCode(printContainer, {
                 text: checkinUrl, width: 250, height: 250,
                 colorDark: "#0f172a", colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                correctLevel: QRCode.CorrectLevel.L
             });
 
             // 2. Cập nhật và tạo QR cho trang Modal xem trên điện thoại
@@ -1035,11 +1035,15 @@
             new QRCode(modalContainer, {
                 text: checkinUrl, width: 250, height: 250,
                 colorDark: "#0f172a", colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                correctLevel: QRCode.CorrectLevel.L
             });
 
             // 3. Hiển thị modal
-            const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+            const qrModalEl = document.getElementById('qrModal');
+            let qrModal = bootstrap.Modal.getInstance(qrModalEl);
+            if (!qrModal) {
+                qrModal = new bootstrap.Modal(qrModalEl);
+            }
             qrModal.show();
 
             // 4. Sự kiện click nút tải ảnh
