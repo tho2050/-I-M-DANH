@@ -206,25 +206,9 @@
                                 <label>Họ và Tên <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fullName" placeholder="Nguyễn Văn An" disabled />
                             </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <label>Lớp</label>
-                                    <input type="text" class="form-control" id="className" placeholder="CNTT-K21A" disabled />
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <label>Khoa</label>
-                                    <input type="text" class="form-control" id="faculty" placeholder="Công nghệ thông tin" disabled />
-                                </div>
-                            </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <label>Số điện thoại</label>
-                                    <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" disabled />
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <label>Email</label>
-                                    <input type="email" class="form-control" id="email" placeholder="sv@@muce.edu.vn" disabled />
-                                </div>
+                            <div class="mb-3">
+                                <label>Lớp</label>
+                                <input type="text" class="form-control" id="className" placeholder="CNTT-K21A" disabled />
                             </div>
 
                             <button class="btn-submit-checkin" id="btnSubmit" disabled onclick="submitCheckIn()">
@@ -485,7 +469,7 @@
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
-                faculty: document.getElementById('faculty').value || '',
+                faculty: '',
                 distance: dist.toFixed(1) + "m",
                 device: navigator.userAgent.includes("Mobi") ? "Điện Thoại Di Động" : "Thiết Bị Chạy Thử"
             });
@@ -528,9 +512,9 @@
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
-                faculty: document.getElementById('faculty').value || '',
-                phoneNumber: document.getElementById('phoneNumber').value || '',
-                email: document.getElementById('email').value || '',
+                faculty: '',
+                phoneNumber: '',
+                email: '',
                 coords: `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`,
                 distance: dist.toFixed(1) + "m",
                 device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin"
