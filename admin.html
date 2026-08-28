@@ -193,7 +193,7 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-8">
+                            <div class="col-md-8 position-relative">
                                 <label class="form-label fw-bold small">Địa điểm tổ chức quy định:</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="newLocation" placeholder="VD: 195 Hà Huy Tập, Buôn Ma Thuột" required />
@@ -440,28 +440,37 @@
             }
 
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+                // Sử dụng Photon API (không giới hạn Rate Limit và không chặn Vercel)
+                const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
                 const data = await res.json();
                 
                 const suggestionsContainer = document.getElementById('addressSuggestions');
                 suggestionsContainer.innerHTML = '';
 
-                if (data.length === 0) {
+                if (!data.features || data.features.length === 0) {
                     alert('Không tìm thấy tọa độ phù hợp cho địa chỉ này. Bạn hãy tự click chọn trực tiếp vị trí trên bản đồ nhé.');
                     suggestionsContainer.classList.add('d-none');
-                } else if (data.length === 1) {
+                } else if (data.features.length === 1) {
                     // Nếu chỉ có 1 kết quả duy nhất, tự chọn luôn
-                    selectSuggestion(data[0].lat, data[0].lon, data[0].display_name);
+                    const item = data.features[0];
+                    const lat = item.geometry.coordinates[1];
+                    const lon = item.geometry.coordinates[0];
+                    const name = formatPhotonName(item.properties);
+                    selectSuggestion(lat, lon, name);
                 } else {
                     // Nếu nhiều kết quả, hiển thị dropdown đề xuất
                     suggestionsContainer.classList.remove('d-none');
-                    data.forEach(item => {
+                    data.features.forEach(item => {
+                        const lat = item.geometry.coordinates[1];
+                        const lon = item.geometry.coordinates[0];
+                        const name = formatPhotonName(item.properties);
+                        
                         const option = document.createElement('button');
                         option.type = 'button';
                         option.className = 'list-group-item list-group-item-action small text-start py-2';
                         option.style.fontSize = '0.78rem';
-                        option.innerHTML = `<i class="fa-solid fa-map-pin text-danger me-1"></i> ${item.display_name}`;
-                        option.onclick = () => selectSuggestion(item.lat, item.lon, item.display_name);
+                        option.innerHTML = `<i class="fa-solid fa-map-pin text-danger me-1"></i> ${name}`;
+                        option.onclick = () => selectSuggestion(lat, lon, name);
                         suggestionsContainer.appendChild(option);
                     });
                 }
@@ -474,6 +483,18 @@
                     btn.disabled = false;
                 }
             }
+        }
+
+        // Tạo định dạng tên địa chỉ hiển thị rõ ràng từ Photon API
+        function formatPhotonName(properties) {
+            const parts = [];
+            if (properties.name) parts.push(properties.name);
+            if (properties.housenumber) parts.push(properties.housenumber);
+            if (properties.street) parts.push(properties.street);
+            if (properties.locality) parts.push(properties.locality);
+            if (properties.city) parts.push(properties.city);
+            if (properties.country) parts.push(properties.country);
+            return parts.join(', ');
         }
 
         function selectSuggestion(lat, lon, displayName) {
