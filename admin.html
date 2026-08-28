@@ -90,18 +90,55 @@
                 <h4 class="mt-2 fw-bold">Đăng Nhập Admin</h4>
                 <p class="text-muted small">Cần mật khẩu để truy cập công cụ quản trị.</p>
             </div>
-            <form onsubmit="handleLogin(event)">
+            
+            <!-- FORM ĐĂNG NHẬP -->
+            <div id="loginFormContainer">
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
+                        <input type="text" class="form-control" id="adminUsernameInput" placeholder="" required autocomplete="username" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label fw-bold small mb-0">Mật khẩu:</label>
+                            <a href="#" onclick="showForgotPassword(event)" class="small text-decoration-none text-primary fw-medium">Quên mật khẩu?</a>
+                        </div>
+                        <input type="password" class="form-control mt-1" id="adminPwdInput" placeholder="" required autocomplete="current-password" />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Xác Nhận Đăng Nhập</button>
+                </form>
+                <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
+            </div>
+
+            <!-- FORM QUÊN MẬT KHẨU -->
+            <div id="forgotFormContainer" class="d-none">
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
-                    <input type="text" class="form-control" id="adminUsernameInput" placeholder="" required autocomplete="username" />
+                    <label class="form-label fw-bold small">Tên đăng nhập cần khôi phục:</label>
+                    <input type="text" class="form-control" id="forgotUsernameInput" placeholder="VD: nguyenthithuhien" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Mật khẩu:</label>
-                    <input type="password" class="form-control" id="adminPwdInput" placeholder="" required autocomplete="current-password" />
+                    <label class="form-label fw-bold small">Email nhận mã OTP:</label>
+                    <input type="email" class="form-control" id="forgotEmailInput" placeholder="VD: nguyenthithuhien@gmail.com" required />
+                    <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Email phải bắt đầu bằng tên đăng nhập để xác thực tính chủ sở hữu.</span>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Xác Nhận Đăng Nhập</button>
-            </form>
-            <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
+                
+                <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="requestOtp(event)" id="btnSendOtp">Gửi Mã OTP Về Gmail</button>
+                <div class="alert alert-danger mt-2 py-2 small d-none" id="forgotError"></div>
+                <div class="alert alert-success mt-2 py-2 small d-none" id="forgotSentAlert">Đã gửi mã OTP. Vui lòng kiểm tra hộp thư đến (hoặc thư rác) trong Gmail của bạn!</div>
+
+                <!-- Ô nhập mã OTP -->
+                <div id="otpInputContainer" class="d-none mt-3 border-top pt-3">
+                    <label class="form-label fw-bold small">Nhập mã OTP (6 chữ số):</label>
+                    <input type="text" class="form-control text-center fw-bold fs-5" id="forgotOtpInput" maxlength="6" placeholder="------" style="letter-spacing: 5px;" />
+                    <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2" onclick="verifyOtp(event)" id="btnVerifyOtp">Xác Nhận & Lấy Lại Mật Khẩu</button>
+                </div>
+                
+                <div class="alert alert-success mt-3 py-2 small d-none text-break" id="forgotSuccessAlert"></div>
+
+                <div class="text-center mt-3 pt-2 border-top">
+                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,6 +416,156 @@
         function logout() {
             sessionStorage.removeItem("admin_logged");
             window.location.reload();
+        }
+
+        // HIỂN THỊ CÁC KHUNG ĐĂNG NHẬP / QUÊN MẬT KHẨU
+        function showForgotPassword(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginFormContainer').classList.add('d-none');
+            document.getElementById('forgotFormContainer').classList.remove('d-none');
+            document.getElementById('forgotError').classList.add('d-none');
+            document.getElementById('forgotSentAlert').classList.add('d-none');
+            document.getElementById('otpInputContainer').classList.add('d-none');
+            document.getElementById('forgotSuccessAlert').classList.add('d-none');
+            document.getElementById('btnSendOtp').classList.remove('d-none');
+            document.getElementById('btnSendOtp').disabled = false;
+            document.getElementById('btnSendOtp').innerHTML = 'Gửi Mã OTP Về Gmail';
+            document.getElementById('forgotUsernameInput').value = '';
+            document.getElementById('forgotEmailInput').value = '';
+            document.getElementById('forgotOtpInput').value = '';
+        }
+
+        function showLoginForm(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginFormContainer').classList.remove('d-none');
+            document.getElementById('forgotFormContainer').classList.add('d-none');
+            document.getElementById('loginError').classList.add('d-none');
+        }
+
+        // GỬI YÊU CẦU MÃ OTP VỀ EMAIL
+        async function requestOtp(e) {
+            if (e) e.preventDefault();
+            const user = document.getElementById('forgotUsernameInput').value.trim().toLowerCase();
+            const email = document.getElementById('forgotEmailInput').value.trim().toLowerCase();
+            const btn = document.getElementById('btnSendOtp');
+            const errorEl = document.getElementById('forgotError');
+            const sentEl = document.getElementById('forgotSentAlert');
+
+            errorEl.classList.add('d-none');
+            sentEl.classList.add('d-none');
+
+            if (!user || !email) {
+                errorEl.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và email!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            // Kiểm tra xem tên đăng nhập có hợp lệ không
+            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
+            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
+            const allUsers = superUsers.concat(staffUsers);
+
+            if (!allUsers.includes(user)) {
+                errorEl.textContent = "Tên đăng nhập không tồn tại trong hệ thống quản trị!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            // Kiểm tra bảo mật: Email phải bắt đầu bằng tên đăng nhập hoặc trùng khớp hoàn toàn
+            let emailPrefix = email.split('@')[0];
+            let userPrefix = user.split('@')[0];
+
+            if (emailPrefix !== userPrefix) {
+                errorEl.textContent = "Email nhận mã OTP không khớp với tên đăng nhập của tài khoản này!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang gửi OTP...';
+
+            try {
+                const response = await fetch(CONFIG.googleScriptUrl + '?action=sendOtp', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: email })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    sentEl.classList.remove('d-none');
+                    document.getElementById('otpInputContainer').classList.remove('d-none');
+                    btn.classList.add('d-none'); // Ẩn nút gửi OTP đi
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Gửi Mã OTP Về Gmail';
+                    errorEl.textContent = "Lỗi hệ thống gửi mail: " + result.message;
+                    errorEl.classList.remove('d-none');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Gửi Mã OTP Về Gmail';
+                errorEl.textContent = "Lỗi kết nối Server Google Sheets! Vui lòng thử lại sau.";
+                errorEl.classList.remove('d-none');
+                console.error("Lỗi gửi OTP:", err);
+            }
+        }
+
+        // XÁC NHẬN MÃ OTP VÀ HIỂN THỊ MẬT KHẨU
+        async function verifyOtp(e) {
+            if (e) e.preventDefault();
+            const user = document.getElementById('forgotUsernameInput').value.trim().toLowerCase();
+            const email = document.getElementById('forgotEmailInput').value.trim().toLowerCase();
+            const otp = document.getElementById('forgotOtpInput').value.trim();
+            const btn = document.getElementById('btnVerifyOtp');
+            const errorEl = document.getElementById('forgotError');
+            const successEl = document.getElementById('forgotSuccessAlert');
+
+            errorEl.classList.add('d-none');
+            successEl.classList.add('d-none');
+
+            if (!otp) {
+                errorEl.textContent = "Vui lòng nhập mã OTP 6 chữ số!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang xác nhận...';
+
+            try {
+                const response = await fetch(CONFIG.googleScriptUrl + '?action=verifyOtp', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Xác thực thành công! Lấy mật khẩu tương ứng để hiển thị
+                    let passwordText = "";
+                    if (user === "hongnhung@muce.edu.vn" || user === "dhxdmtmuce") {
+                        passwordText = "<strong>Mật khẩu của bạn là:</strong> <span class='text-danger fw-bold fs-5'>admin123</span> hoặc <span class='text-danger fw-bold fs-5'>nhung2011</span> (Quyền Super Admin)";
+                    } else {
+                        passwordText = "<strong>Mật khẩu của bạn là:</strong> <span class='text-danger fw-bold fs-5'>admin123</span> (Quyền Nhân Viên)";
+                    }
+
+                    successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Xác thực OTP Thành Công!</h6>` +
+                                          `<p class="mb-0 mt-2">${passwordText}</p>`;
+                    successEl.classList.remove('d-none');
+                    document.getElementById('otpInputContainer').classList.add('d-none');
+                    document.getElementById('forgotSentAlert').classList.add('d-none');
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Xác Nhận & Lấy Lại Mật Khẩu';
+                    errorEl.textContent = result.message;
+                    errorEl.classList.remove('d-none');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Xác Nhận & Lấy Lại Mật Khẩu';
+                errorEl.textContent = "Lỗi kết nối mạng khi xác nhận OTP!";
+                errorEl.classList.remove('d-none');
+                console.error("Lỗi xác nhận OTP:", err);
+            }
         }
 
         function showDashboard() {
