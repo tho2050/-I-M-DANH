@@ -123,34 +123,8 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                        <!-- GPS Tabs -->
-                        <div class="gps-tabs">
-                            <button class="gps-tab active" onclick="switchGpsMode('device', this)">1. GPS Thiết Bị</button>
-                            <button class="gps-tab" onclick="switchGpsMode('test', this)">2. Chế độ Test (PC)</button>
-                        </div>
-
-                        <!-- Device mode map -->
-                        <div id="deviceModePanel" class="device-mode-panel">
-                            <div id="checkinMap"></div>
-                        </div>
-
-                        <!-- Test mode controls -->
-                        <div id="testModePanel" class="test-mode-panel">
-                            <div class="gps-alert warning py-2 mb-2">
-                                <div><i class="fa-solid fa-info-circle"></i> Kéo ghim màu đỏ vào vùng xanh để giả lập GPS.</div>
-                            </div>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="small text-muted">Vĩ độ (Lat)</label>
-                                    <input type="number" step="any" class="form-control form-control-sm" id="testLat" />
-                                </div>
-                                <div class="col-6">
-                                    <label class="small text-muted">Kinh độ (Lng)</label>
-                                    <input type="number" step="any" class="form-control form-control-sm" id="testLng" />
-                                </div>
-                            </div>
-                            <div id="testMapContainer" style="height: 220px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></div>
-                        </div>
+                        <!-- Map -->
+                        <div id="checkinMap"></div>
 
                         <!-- GPS info box -->
                         <div class="gps-info-box">
@@ -304,72 +278,7 @@
             requestDeviceGps();
         });
 
-        function switchGpsMode(mode, btn) {
-            gpsMode = mode;
-            document.querySelectorAll('.gps-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
 
-            if (mode === 'device') {
-                document.getElementById('deviceModePanel').classList.remove('hidden');
-                document.getElementById('testModePanel').classList.remove('active');
-                requestDeviceGps();
-            } else {
-                document.getElementById('deviceModePanel').classList.add('hidden');
-                document.getElementById('testModePanel').classList.add('active');
-                document.getElementById('testLat').value = targetLat;
-                document.getElementById('testLng').value = targetLng;
-                initTestMap();
-                userLat = targetLat;
-                userLng = targetLng;
-                updateGpsDisplay();
-            }
-        }
-
-        function initTestMap() {
-            if (testMap) return;
-            setTimeout(() => {
-                testMap = L.map('testMapContainer').setView([targetLat, targetLng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(testMap);
-                L.circle([targetLat, targetLng], { color: '#1a4b8c', fillColor: '#3b82f6', fillOpacity: 0.15, radius: radiusMeters }).addTo(testMap);
-                L.marker([targetLat, targetLng]).addTo(testMap);
-
-                testMarker = L.marker([targetLat, targetLng], {
-                    draggable: true,
-                    icon: L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                        iconSize: [25, 41], iconAnchor: [12, 41]
-                    })
-                }).addTo(testMap);
-
-                testMarker.on('dragend', () => {
-                    const pos = testMarker.getLatLng();
-                    document.getElementById('testLat').value = pos.lat.toFixed(6);
-                    document.getElementById('testLng').value = pos.lng.toFixed(6);
-                    userLat = pos.lat;
-                    userLng = pos.lng;
-                    updateGpsDisplay();
-                });
-
-                document.getElementById('testLat').addEventListener('input', () => {
-                    const lat = parseFloat(document.getElementById('testLat').value);
-                    const lng = parseFloat(document.getElementById('testLng').value);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        userLat = lat; userLng = lng;
-                        testMarker.setLatLng([lat, lng]);
-                        updateGpsDisplay();
-                    }
-                });
-                document.getElementById('testLng').addEventListener('input', () => {
-                    const lat = parseFloat(document.getElementById('testLat').value);
-                    const lng = parseFloat(document.getElementById('testLng').value);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        userLat = lat; userLng = lng;
-                        testMarker.setLatLng([lat, lng]);
-                        updateGpsDisplay();
-                    }
-                });
-            }, 200);
-        }
 
         function requestDeviceGps() {
             if (!navigator.geolocation) {
@@ -395,7 +304,7 @@
                     map.fitBounds(bounds.pad(0.3));
                 },
                 err => {
-                    alert('Lỗi định vị. Hãy dùng Chế độ Test (PC) hoặc cấp quyền vị trí.');
+                    alert('Lỗi định vị. Vui lòng bật dịch vụ định vị GPS (Location Services) trên điện thoại và cấp quyền truy cập vị trí cho trình duyệt.');
                 },
                 { enableHighAccuracy: true }
             );
