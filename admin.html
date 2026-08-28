@@ -78,12 +78,16 @@
             </div>
             <form onsubmit="handleLogin(event)">
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Mật khẩu quản trị:</label>
+                    <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
+                    <input type="text" class="form-control" id="adminUsernameInput" placeholder="VD: Hongnhung@muce.edu.vn" required autocomplete="username" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Mật khẩu:</label>
                     <input type="password" class="form-control" id="adminPwdInput" placeholder="Nhập mật khẩu..." required autocomplete="current-password" />
                 </div>
                 <button type="submit" class="btn btn-primary w-100 fw-bold">Xác Nhận Đăng Nhập</button>
             </form>
-            <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Mật khẩu không chính xác!</div>
+            <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
         </div>
     </div>
 
@@ -317,8 +321,13 @@
 
         function handleLogin(e) {
             e.preventDefault();
+            const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value;
-            if (pwd === CONFIG.adminPassword) {
+            
+            const allowedUsers = ["hongnhung@muce.edu.vn", "dhxdmt", "dhxdmtmuce"];
+            const allowedPasswords = ["admin123", "nhung2011"];
+
+            if (allowedUsers.includes(user) && allowedPasswords.includes(pwd)) {
                 sessionStorage.setItem("admin_logged", "true");
                 showDashboard();
             } else {
