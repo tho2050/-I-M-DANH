@@ -333,13 +333,13 @@
         function initSelectMap() {
             if (selectMap) return;
             selectMap = L.map('mapSelector').setView([10.7725, 106.6581], 6); // Việt Nam center
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; CartoDB'
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(selectMap);
 
             // Tự động tìm tên địa điểm từ tọa độ (Reverse Geocoding)
             const reverseGeocode = (lat, lng) => {
-                const url = `https://photon.komoot.io/api/?lat=${lat}&lon=${lng}&limit=1`;
+                const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
                 fetch(url)
                     .then(res => res.json())
                     .then(data => {
