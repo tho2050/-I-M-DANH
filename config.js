@@ -66,7 +66,28 @@ function getActivities() {
     return CONFIG.activities;
 }
 
-// Hàm lưu danh sách hoạt động mới vào localStorage
+// Hàm lưu danh sách hoạt động mới vào localStorage và đồng bộ lên Google Sheet cloud
 function saveActivities(list) {
     localStorage.setItem("gps_attendance_activities", JSON.stringify(list));
+    if (CONFIG.googleScriptUrl) {
+        fetch(CONFIG.googleScriptUrl + '?action=saveActivities', {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(list)
+        }).catch(e => console.error("Lỗi đồng bộ lên cloud:", e));
+    }
+}
+
+// Đồng bộ danh sách hoạt động từ Google Sheets về LocalStorage (chạy ngầm)
+function syncActivitiesFromCloud(callback) {
+    if (!CONFIG.googleScriptUrl) return;
+    fetch(CONFIG.googleScriptUrl + "?action=getActivities")
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                localStorage.setItem("gps_attendance_activities", JSON.stringify(data));
+                if (callback) callback(data);
+            }
+        })
+        .catch(err => console.error("Lỗi đồng bộ danh sách sự kiện từ cloud:", err));
 }

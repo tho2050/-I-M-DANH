@@ -323,22 +323,11 @@
             updateLocalhostWarning();
 
             renderActivities();
-        }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            document.getElementById('tab-manage-activities').classList.add('d-none');
-            document.getElementById('tab-add-activity').classList.add('d-none');
-
-            document.getElementById('tab-' + tabId).classList.remove('d-none');
-
-            if (tabId === 'add-activity') {
-                setTimeout(() => {
-                    selectMap.invalidateSize();
-                }, 200);
-            }
+            // Đồng bộ ngầm danh sách sự kiện từ Google Sheet về
+            syncActivitiesFromCloud(() => {
+                renderActivities();
+            });
         }
 
         function initSelectMap() {

@@ -315,56 +315,71 @@
         // Render activities dynamically
         window.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('activitiesGrid');
-            const list = getActivities(); // Dùng hàm getActivities() từ config.js để lấy danh sách động từ admin
 
-            if (list.length === 0) {
-                grid.innerHTML = `<div class="text-center py-5"><h5 class="text-muted">Không có sự kiện nào.</h5></div>`;
-                return;
-            }
+            function render(list) {
+                if (list.length === 0) {
+                    grid.innerHTML = `<div class="text-center py-5"><h5 class="text-muted">Không có sự kiện nào.</h5></div>`;
+                    return;
+                }
 
-            grid.innerHTML = list.map(item => `
-                <div class="col-md-6 col-lg-4 activity-item" 
-                     data-title="${item.title.toLowerCase()}" 
-                     data-code="${item.code.toLowerCase()}"
-                     data-location="${item.locationAddress.toLowerCase()}"
-                     data-lat="${item.latitude}" 
-                     data-lng="${item.longitude}">
-                    <div class="activity-card">
-                        <div class="card-header-strip"></div>
-                        <div class="card-body-content">
-                            <div>
-                                <span class="code-badge"><i class="fa-solid fa-hashtag"></i> ${item.code}</span>
-                            </div>
-                            <h5 class="card-title">${item.title}</h5>
-                            <p class="card-desc">${item.description || 'Không có mô tả.'}</p>
-                            <hr style="border-top:1px solid rgba(99,102,241,0.1); margin: 0.5rem 0;" />
-                            <div class="my-2 flex-grow-1">
-                                <div class="info-row">
-                                    <i class="fa-solid fa-location-dot"></i>
-                                    <span class="text-truncate" title="${item.locationAddress}">${item.locationAddress}</span>
+                grid.innerHTML = list.map(item => `
+                    <div class="col-md-6 col-lg-4 activity-item" 
+                         data-title="${item.title.toLowerCase()}" 
+                         data-code="${item.code.toLowerCase()}"
+                         data-location="${item.locationAddress.toLowerCase()}"
+                         data-lat="${item.latitude}" 
+                         data-lng="${item.longitude}">
+                        <div class="activity-card">
+                            <div class="card-header-strip"></div>
+                            <div class="card-body-content">
+                                <div>
+                                    <span class="code-badge"><i class="fa-solid fa-hashtag"></i> ${item.code}</span>
                                 </div>
-                                <div class="info-row">
-                                    <i class="fa-solid fa-bullseye"></i>
-                                    <span>Bán kính: <strong>${item.radiusMeters} m</strong></span>
+                                <h5 class="card-title">${item.title}</h5>
+                                <p class="card-desc">${item.description || 'Không có mô tả.'}</p>
+                                <hr style="border-top:1px solid rgba(99,102,241,0.1); margin: 0.5rem 0;" />
+                                <div class="my-2 flex-grow-1">
+                                    <div class="info-row">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <span class="text-truncate" title="${item.locationAddress}">${item.locationAddress}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fa-solid fa-bullseye"></i>
+                                        <span>Bán kính: <strong>${item.radiusMeters} m</strong></span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <span>Thời gian: ${item.startTime}</span>
+                                    </div>
+                                    <div class="info-row distance-row d-none">
+                                        <i class="fa-solid fa-route" style="color: #c084fc;"></i>
+                                        <span style="color: #c084fc;">Cách bạn: <strong class="distance-value">--</strong></span>
+                                    </div>
                                 </div>
-                                <div class="info-row">
-                                    <i class="fa-regular fa-clock"></i>
-                                    <span>Thời gian: ${item.startTime}</span>
+                                <div class="card-actions">
+                                    <a href="checkin.html?code=${item.code}" class="btn-checkin-card">
+                                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Điểm danh ngay
+                                    </a>
                                 </div>
-                                <div class="info-row distance-row d-none">
-                                    <i class="fa-solid fa-route" style="color: #c084fc;"></i>
-                                    <span style="color: #c084fc;">Cách bạn: <strong class="distance-value">--</strong></span>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <a href="checkin.html?code=${item.code}" class="btn-checkin-card">
-                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Điểm danh ngay
-                                </a>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+
+                // Cập nhật lại khoảng cách nếu định vị đã sẵn sàng
+                if (userCoords) {
+                    updateAllDistances();
+                }
+            }
+
+            // 1. Tải tức thì bằng Local Cache trước
+            const localList = getActivities();
+            render(localList);
+
+            // 2. Chạy ngầm lấy dữ liệu từ Google Sheets về đồng bộ và vẽ lại
+            syncActivitiesFromCloud((cloudList) => {
+                render(cloudList);
+            });
         });
 
         function filterActivities() {
