@@ -217,7 +217,7 @@
         }
 
         const list = getActivities(); // Lấy danh sách hoạt động động từ localStorage/config
-        let activity = list.find(a => a.code.toLowerCase() === actCode.trim().toLowerCase());
+        let activity = list.find(a => String(a.code || '').toLowerCase() === String(actCode || '').trim().toLowerCase());
 
         // Nếu không tìm thấy trong LocalStorage nhưng URL có truyền đủ tọa độ và thông tin
         if (!activity && actCode && actTitle && actLat && actLng) {
