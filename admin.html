@@ -101,7 +101,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <label class="form-label fw-bold small mb-0">Mật khẩu:</label>
-                            <a href="#" onclick="showForgotPassword(event)" class="small text-decoration-none text-primary fw-medium">Quên mật khẩu?</a>
+                            <button type="button" onclick="showForgotPassword(event)" class="btn btn-link p-0 small text-decoration-none text-primary fw-medium border-0 bg-transparent">Quên mật khẩu?</button>
                         </div>
                         <input type="password" class="form-control mt-1" id="adminPwdInput" placeholder="" required autocomplete="current-password" />
                     </div>
@@ -565,44 +565,89 @@
         // HIỂN THỊ CÁC KHUNG ĐĂNG NHẬP / QUÊN MẬT KHẨU / ĐĂNG KÝ
         function showForgotPassword(e) {
             if (e) e.preventDefault();
-            document.getElementById('loginFormContainer').classList.add('d-none');
-            document.getElementById('forgotFormContainer').classList.remove('d-none');
-            document.getElementById('registerFormContainer').classList.add('d-none');
+            const loginForm = document.getElementById('loginFormContainer');
+            const forgotForm = document.getElementById('forgotFormContainer');
+            const regForm = document.getElementById('registerFormContainer');
+
+            if (loginForm) loginForm.classList.add('d-none');
+            if (forgotForm) forgotForm.classList.remove('d-none');
+            if (regForm) regForm.classList.add('d-none');
             
-            document.getElementById('forgotError').classList.add('d-none');
-            document.getElementById('forgotSentAlert').classList.add('d-none');
-            document.getElementById('otpInputContainer').classList.add('d-none');
-            document.getElementById('resetPasswordContainer').classList.add('d-none');
-            document.getElementById('forgotSuccessAlert').classList.add('d-none');
-            document.getElementById('btnSendOtp').classList.remove('d-none');
-            document.getElementById('btnSendOtp').disabled = false;
-            document.getElementById('btnSendOtp').innerHTML = 'Gửi Mã OTP Về Gmail';
-            document.getElementById('forgotUsernameInput').value = '';
-            document.getElementById('forgotEmailInput').value = '';
-            document.getElementById('forgotOtpInput').value = '';
-            document.getElementById('resetNewPwdInput').value = '';
-            document.getElementById('resetConfirmPwdInput').value = '';
+            const forgotErr = document.getElementById('forgotError');
+            if (forgotErr) forgotErr.classList.add('d-none');
+            
+            const forgotSent = document.getElementById('forgotSentAlert');
+            if (forgotSent) forgotSent.classList.add('d-none');
+
+            const otpContainer = document.getElementById('otpInputContainer');
+            if (otpContainer) otpContainer.classList.add('d-none');
+
+            const resetContainer = document.getElementById('resetPasswordContainer');
+            if (resetContainer) resetContainer.classList.add('d-none');
+
+            const forgotSuccess = document.getElementById('forgotSuccessAlert');
+            if (forgotSuccess) forgotSuccess.classList.add('d-none');
+
+            const btnSend = document.getElementById('btnSendOtp');
+            if (btnSend) {
+                btnSend.classList.remove('d-none');
+                btnSend.disabled = false;
+                btnSend.innerHTML = 'Gửi Mã OTP Về Gmail';
+            }
+
+            const inputUser = document.getElementById('forgotUsernameInput');
+            if (inputUser) inputUser.value = '';
+
+            const inputEmail = document.getElementById('forgotEmailInput');
+            if (inputEmail) inputEmail.value = '';
+
+            const inputOtp = document.getElementById('forgotOtpInput');
+            if (inputOtp) inputOtp.value = '';
+
+            const inputNewPwd = document.getElementById('resetNewPwdInput');
+            if (inputNewPwd) inputNewPwd.value = '';
+
+            const inputConfirmPwd = document.getElementById('resetConfirmPwdInput');
+            if (inputConfirmPwd) inputConfirmPwd.value = '';
         }
 
         function showLoginForm(e) {
             if (e) e.preventDefault();
-            document.getElementById('loginFormContainer').classList.remove('d-none');
-            document.getElementById('forgotFormContainer').classList.add('d-none');
-            document.getElementById('registerFormContainer').classList.add('d-none');
-            document.getElementById('loginError').classList.add('d-none');
+            const loginForm = document.getElementById('loginFormContainer');
+            const forgotForm = document.getElementById('forgotFormContainer');
+            const regForm = document.getElementById('registerFormContainer');
+            const loginErr = document.getElementById('loginError');
+
+            if (loginForm) loginForm.classList.remove('d-none');
+            if (forgotForm) forgotForm.classList.add('d-none');
+            if (regForm) regForm.classList.add('d-none');
+            if (loginErr) loginErr.classList.add('d-none');
         }
 
         function showRegisterForm(e) {
             if (e) e.preventDefault();
-            document.getElementById('loginFormContainer').classList.add('d-none');
-            document.getElementById('forgotFormContainer').classList.add('d-none');
-            document.getElementById('registerFormContainer').classList.remove('d-none');
+            const loginForm = document.getElementById('loginFormContainer');
+            const forgotForm = document.getElementById('forgotFormContainer');
+            const regForm = document.getElementById('registerFormContainer');
+
+            if (loginForm) loginForm.classList.add('d-none');
+            if (forgotForm) forgotForm.classList.add('d-none');
+            if (regForm) regForm.classList.remove('d-none');
             
-            document.getElementById('regError').classList.add('d-none');
-            document.getElementById('regSuccess').classList.add('d-none');
-            document.getElementById('regUsernameInput').value = '';
-            document.getElementById('regPwdInput').value = '';
-            document.getElementById('regRoleSelect').value = 'staff';
+            const regErr = document.getElementById('regError');
+            if (regErr) regErr.classList.add('d-none');
+            
+            const regSucc = document.getElementById('regSuccess');
+            if (regSucc) regSucc.classList.add('d-none');
+
+            const inputUser = document.getElementById('regUsernameInput');
+            if (inputUser) inputUser.value = '';
+
+            const inputPwd = document.getElementById('regPwdInput');
+            if (inputPwd) inputPwd.value = '';
+
+            const selectRole = document.getElementById('regRoleSelect');
+            if (selectRole) selectRole.value = 'staff';
             toggleAdminCodeInput();
         }
 
