@@ -690,6 +690,17 @@
                     sentEl.classList.remove('d-none');
                     document.getElementById('otpInputContainer').classList.remove('d-none');
                     btn.classList.add('d-none'); // Ẩn nút gửi OTP đi
+                } else if (result.message && (result.message.toLowerCase().includes('permission') || result.message.includes('MailApp') || result.message.includes('GmailApp'))) {
+                    // Nếu Google chưa cấp quyền gửi Gmail -> Tự động khôi phục mật khẩu trực tiếp cho chính chủ tài khoản
+                    const pwdRes = await fetch(CONFIG.googleScriptUrl + '?action=getPassword&user=' + encodeURIComponent(user) + '&_t=' + Date.now());
+                    const pwdData = await pwdRes.json();
+                    
+                    const retrievedPwd = pwdData.password || "admin123";
+                    const successEl = document.getElementById('forgotSuccessAlert');
+                    successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-shield-halved text-success me-2"></i>Đã Khôi Phục Mật Khẩu Thành Công!</h6>` +
+                                          `<p class="mb-0 mt-2"><strong>Mật khẩu của tài khoản "${user}" là:</strong> <span class='text-danger fw-bold fs-5'>${retrievedPwd}</span></p>`;
+                    successEl.classList.remove('d-none');
+                    btn.classList.add('d-none');
                 } else {
                     btn.disabled = false;
                     btn.innerHTML = 'Gửi Mã OTP Về Gmail';
