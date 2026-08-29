@@ -133,7 +133,21 @@
                 <div id="otpInputContainer" class="d-none mt-3 border-top pt-3">
                     <label class="form-label fw-bold small">Nhập mã OTP (6 chữ số):</label>
                     <input type="text" class="form-control text-center fw-bold fs-5" id="forgotOtpInput" maxlength="6" placeholder="------" style="letter-spacing: 5px;" />
-                    <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2" onclick="verifyOtp(event)" id="btnVerifyOtp">Xác Nhận & Lấy Lại Mật Khẩu</button>
+                    <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2" onclick="verifyOtp(event)" id="btnVerifyOtp">Xác Nhận Mã OTP</button>
+                </div>
+
+                <!-- Ô ĐẶT LẠI MẬT KHẨU MỚI (Hiện ra sau khi xác nhận OTP thành công) -->
+                <div id="resetPasswordContainer" class="d-none mt-3 border-top pt-3">
+                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-key me-1"></i>Đặt Lại Mật Khẩu Mới</h6>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Mật khẩu mới:</label>
+                        <input type="password" class="form-control" id="resetNewPwdInput" placeholder="Nhập mật khẩu mới..." required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Xác nhận mật khẩu mới:</label>
+                        <input type="password" class="form-control" id="resetConfirmPwdInput" placeholder="Nhập lại mật khẩu mới..." required />
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="saveNewPassword(event)" id="btnSaveNewPwd"><i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới</button>
                 </div>
                 
                 <div class="alert alert-success mt-3 py-2 small d-none text-break" id="forgotSuccessAlert"></div>
@@ -548,6 +562,7 @@
             document.getElementById('forgotError').classList.add('d-none');
             document.getElementById('forgotSentAlert').classList.add('d-none');
             document.getElementById('otpInputContainer').classList.add('d-none');
+            document.getElementById('resetPasswordContainer').classList.add('d-none');
             document.getElementById('forgotSuccessAlert').classList.add('d-none');
             document.getElementById('btnSendOtp').classList.remove('d-none');
             document.getElementById('btnSendOtp').disabled = false;
@@ -555,6 +570,8 @@
             document.getElementById('forgotUsernameInput').value = '';
             document.getElementById('forgotEmailInput').value = '';
             document.getElementById('forgotOtpInput').value = '';
+            document.getElementById('resetNewPwdInput').value = '';
+            document.getElementById('resetConfirmPwdInput').value = '';
         }
 
         function showLoginForm(e) {
@@ -717,7 +734,7 @@
             }
         }
 
-        // XÁC NHẬN MÃ OTP VÀ HIỂN THỊ MẬT KHẨU
+        // XÁC NHẬN MÃ OTP VÀ MỞ CỬA SỔ ĐẶT MẬT KHẨU MỚI
         async function verifyOtp(e) {
             if (e) e.preventDefault();
             const user = document.getElementById('forgotUsernameInput').value.trim().toLowerCase();
@@ -736,46 +753,86 @@
             }
 
             const savedOtp = sessionStorage.getItem("admin_recovery_otp");
-            const savedUser = sessionStorage.getItem("admin_recovery_user");
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang xác nhận...';
 
             try {
-                // Kiểm tra mã OTP thành công
                 if (otp === savedOtp || otp === "123456") {
-                    // Lấy mật khẩu của tài khoản từ Google Sheets
-                    let retrievedPwd = "admin123";
-                    try {
-                        const pwdRes = await fetch(CONFIG.googleScriptUrl + '?action=getPassword&user=' + encodeURIComponent(user) + '&_t=' + Date.now());
-                        const pwdData = await pwdRes.json();
-                        if (pwdData && pwdData.password) {
-                            retrievedPwd = pwdData.password;
-                        }
-                    } catch (e) {
-                        console.warn("Lỗi đọc mật khẩu từ Sheets:", e);
-                    }
-
-                    const passwordText = `<strong>Mật khẩu của tài khoản "${user}" là:</strong> <span class='text-danger fw-bold fs-5'>${retrievedPwd}</span>`;
-
-                    successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Xác thực OTP Thành Công!</h6>` +
-                                          `<p class="mb-0 mt-2">${passwordText}</p>`;
-                    successEl.classList.remove('d-none');
+                    // Xác thực OTP thành công! Hiển thị form Đặt lại mật khẩu mới
                     document.getElementById('otpInputContainer').classList.add('d-none');
                     document.getElementById('forgotSentAlert').classList.add('d-none');
+                    document.getElementById('resetPasswordContainer').classList.remove('d-none');
+                    
+                    successEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Xác thực OTP thành công! Vui lòng nhập mật khẩu mới bên dưới.`;
+                    successEl.classList.remove('d-none');
                     sessionStorage.removeItem("admin_recovery_otp");
                 } else {
                     btn.disabled = false;
-                    btn.innerHTML = 'Xác Nhận & Lấy Lại Mật Khẩu';
+                    btn.innerHTML = 'Xác Nhận Mã OTP';
                     errorEl.textContent = "Mã OTP 6 chữ số không chính xác! Vui lòng kiểm tra lại Gmail.";
                     errorEl.classList.remove('d-none');
                 }
             } catch (err) {
                 btn.disabled = false;
-                btn.innerHTML = 'Xác Nhận & Lấy Lại Mật Khẩu';
+                btn.innerHTML = 'Xác Nhận Mã OTP';
                 errorEl.textContent = "Lỗi kết nối mạng khi xác nhận OTP!";
                 errorEl.classList.remove('d-none');
                 console.error("Lỗi xác nhận OTP:", err);
+            }
+        }
+
+        // LƯU MẬT KHẨU MỚI SAU KHU XÁC THỰC OTP
+        async function saveNewPassword(e) {
+            if (e) e.preventDefault();
+            const user = document.getElementById('forgotUsernameInput').value.trim().toLowerCase();
+            const newPwd = document.getElementById('resetNewPwdInput').value.trim();
+            const confirmPwd = document.getElementById('resetConfirmPwdInput').value.trim();
+            const btn = document.getElementById('btnSaveNewPwd');
+            const errorEl = document.getElementById('forgotError');
+            const successEl = document.getElementById('forgotSuccessAlert');
+
+            errorEl.classList.add('d-none');
+
+            if (!newPwd || !confirmPwd) {
+                errorEl.textContent = "Vui lòng điền đầy đủ mật khẩu mới!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                errorEl.textContent = "Mật khẩu xác nhận không khớp nhau!";
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu mật khẩu...';
+
+            try {
+                const response = await fetch(CONFIG.googleScriptUrl + '?action=changePassword', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: user, newPassword: newPwd })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đổi Mật Khẩu Thành Công!</h6>` +
+                                          `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay.</p>`;
+                    successEl.classList.remove('d-none');
+                    document.getElementById('resetPasswordContainer').classList.add('d-none');
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới';
+                    errorEl.textContent = result.message || "Lỗi đổi mật khẩu!";
+                    errorEl.classList.remove('d-none');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới';
+                errorEl.textContent = "Lỗi kết nối mạng khi đổi mật khẩu!";
+                errorEl.classList.remove('d-none');
+                console.error("Lỗi lưu mật khẩu:", err);
             }
         }
 
