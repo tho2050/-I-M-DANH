@@ -367,6 +367,21 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Cấu hình Mã Admin Bảo Mật -->
+                    <div class="card border border-warning shadow-sm p-3 mt-4" style="background-color: #fffbeb; border-radius: 12px;">
+                        <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-key text-warning me-2"></i>Đổi Mã Admin Bảo Mật (Đăng ký Super Admin)</h6>
+                        <p class="text-muted small mb-2">Đưa mã bảo mật này cho người bạn muốn cấp quyền đăng ký Super Admin. Bạn có thể thay đổi mã này bất cứ lúc nào.</p>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-6 col-lg-5">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-warning"></i></span>
+                                    <input type="text" class="form-control font-monospace fw-bold" id="adminSecretCodeInput" placeholder="VD: admin123" />
+                                    <button class="btn btn-warning fw-bold text-dark px-3" onclick="updateAdminSecretCode()"><i class="fa-solid fa-save me-1"></i>Lưu Mã Mới</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -608,7 +623,7 @@
             try {
                 const response = await fetch(CONFIG.googleScriptUrl + '?action=registerAccount', {
                     method: 'POST',
-                    body: JSON.stringify({ username: username, password: password, role: role })
+                    body: JSON.stringify({ username: username, password: password, role: role, adminCode: adminCode })
                 });
                 const result = await response.json();
 
@@ -1191,6 +1206,9 @@
                         }
                     }
                 }
+                
+                // Tải thêm mã Admin bảo mật hiện tại
+                fetchAdminSecretCode();
             } catch (err) {
                 console.error("Lỗi lấy danh sách tài khoản:", err);
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Lỗi kết nối máy chủ Google Sheets khi lấy danh sách tài khoản.</td></tr>`;
@@ -1267,6 +1285,46 @@
                 }
             } catch (err) {
                 alert('Lỗi kết nối máy chủ Google Sheets!');
+                console.error(err);
+            }
+        }
+
+        // QUẢN LÝ MÃ ADMIN BẢO MẬT ĐỘNG
+        async function fetchAdminSecretCode() {
+            const input = document.getElementById('adminSecretCodeInput');
+            if (!input) return;
+            try {
+                const res = await fetch(CONFIG.googleScriptUrl + '?action=getAdminCode&_t=' + Date.now());
+                const data = await res.json();
+                if (data.status === 'success' && data.code) {
+                    input.value = data.code;
+                }
+            } catch (err) {
+                console.error("Lỗi lấy mã bảo mật:", err);
+            }
+        }
+
+        async function updateAdminSecretCode() {
+            const input = document.getElementById('adminSecretCodeInput');
+            if (!input) return;
+            const newCode = input.value.trim();
+            if (!newCode) {
+                alert("Vui lòng nhập mã bảo mật mới!");
+                return;
+            }
+
+            if (!confirm(`Bạn có chắc chắn muốn thay đổi Mã Admin bảo mật thành "${newCode}"?`)) return;
+
+            try {
+                const res = await fetch(CONFIG.googleScriptUrl + '?action=setAdminCode&code=' + encodeURIComponent(newCode) + '&_t=' + Date.now());
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("Đã cập nhật Mã Admin bảo mật mới thành công!");
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch (err) {
+                alert("Lỗi kết nối máy chủ Google Sheets!");
                 console.error(err);
             }
         }
