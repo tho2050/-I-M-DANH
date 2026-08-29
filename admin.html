@@ -117,11 +117,11 @@
             <div id="forgotFormContainer" class="d-none">
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Tên đăng nhập cần khôi phục:</label>
-                    <input type="text" class="form-control" id="forgotUsernameInput" placeholder="VD: nguyenthithuhien" required />
+                    <input type="text" class="form-control" id="forgotUsernameInput" placeholder="Nhập tên đăng nhập" required />
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Email nhận mã OTP:</label>
-                    <input type="email" class="form-control" id="forgotEmailInput" placeholder="VD: nguyenthithuhien@gmail.com" required />
+                    <input type="email" class="form-control" id="forgotEmailInput" placeholder="Nhập địa chỉ email" required />
                     <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Email phải bắt đầu bằng tên đăng nhập để xác thực tính chủ sở hữu.</span>
                 </div>
                 
@@ -166,7 +166,7 @@
                 <form onsubmit="handleRegister(event)">
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
-                        <input type="text" class="form-control" id="regUsernameInput" placeholder="VD: hiennguyen" required />
+                        <input type="text" class="form-control" id="regUsernameInput" placeholder="Nhập tên đăng nhập" required />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Mật khẩu:</label>
@@ -296,12 +296,12 @@
                     <form onsubmit="handleCreateActivity(event)" id="eventForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-bold small">Mã hoạt động (Không dấu):</label>
-                                <input type="text" class="form-control" id="newCode" placeholder="VD: SVTN2026" required style="text-transform: uppercase;" />
+                                <label class="form-label fw-bold small">Mã hoạt động:</label>
+                                <input type="text" class="form-control" id="newCode" placeholder="Nhập mã sự kiện" required style="text-transform: uppercase;" />
                             </div>
                             <div class="col-md-8">
-                                <label class="form-label fw-bold small">Tên hoạt động / Sự kiện:</label>
-                                <input type="text" class="form-control" id="newTitle" placeholder="VD: Gặp gỡ tân sinh viên" required />
+                                <label class="form-label fw-bold small">Tên sự kiện <span class="text-danger">*</span>:</label>
+                                <input type="text" class="form-control" id="newTitle" placeholder="Nhập tên sự kiện" required />
                             </div>
                         </div>
 
@@ -344,7 +344,7 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-bold small">Tọa độ GPS (Vĩ độ, Kinh độ):</label>
-                            <input type="text" class="form-control" id="newCoords" placeholder="VD: 21.028511, 105.8542" required />
+                            <input type="text" class="form-control" id="newCoords" placeholder="Tọa độ GPS (Vĩ độ, Kinh độ)" required />
                             <input type="hidden" id="newLat" />
                             <input type="hidden" id="newLng" />
                         </div>
@@ -390,7 +390,7 @@
                             <div class="col-md-6 col-lg-5">
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-warning"></i></span>
-                                    <input type="text" class="form-control font-monospace fw-bold" id="adminSecretCodeInput" placeholder="VD: admin123" />
+                                    <input type="text" class="form-control font-monospace fw-bold" id="adminSecretCodeInput" placeholder="Nhập mã bảo mật mới" />
                                     <button class="btn btn-warning fw-bold text-dark px-3" onclick="updateAdminSecretCode()"><i class="fa-solid fa-save me-1"></i>Lưu Mã Mới</button>
                                 </div>
                             </div>
