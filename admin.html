@@ -433,7 +433,7 @@
     <script src="https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="config.js?v=2.5"></script>
+    <script src="config.js?v=2.6"></script>
     <script>
         let selectMap, selectMarker;
         let serverIp = 'localhost';
@@ -607,14 +607,11 @@
             errorEl.classList.add('d-none');
             successEl.classList.add('d-none');
 
-            // Nếu vai trò là Super Admin, kiểm tra mã xác thực Admin
-            if (role === 'super') {
-                const allowedAdminCodes = ["admin123", "nhung2011"];
-                if (!allowedAdminCodes.includes(adminCode)) {
-                    errorEl.textContent = "Mã Admin bảo mật không chính xác!";
-                    errorEl.classList.remove('d-none');
-                    return;
-                }
+            // Nếu vai trò là Super Admin, yêu cầu nhập Mã Admin bảo mật
+            if (role === 'super' && !adminCode) {
+                errorEl.textContent = "Vui lòng nhập Mã Admin bảo mật!";
+                errorEl.classList.remove('d-none');
+                return;
             }
 
             btn.disabled = true;
