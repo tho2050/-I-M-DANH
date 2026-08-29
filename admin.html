@@ -810,15 +810,20 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu mật khẩu...';
 
             try {
-                const response = await fetch(CONFIG.googleScriptUrl + '?action=changePassword', {
+                // 1. Gửi đổi mật khẩu qua GET (Chống lỗi 302 redirect trên trình duyệt)
+                const getUrl = CONFIG.googleScriptUrl + '?action=changePassword&username=' + encodeURIComponent(user) + '&newPassword=' + encodeURIComponent(newPwd) + '&_t=' + Date.now();
+                const response = await fetch(getUrl);
+                const result = await response.json();
+
+                // 2. Gửi qua POST dự phòng
+                fetch(CONFIG.googleScriptUrl + '?action=changePassword', {
                     method: 'POST',
                     body: JSON.stringify({ username: user, newPassword: newPwd })
-                });
-                const result = await response.json();
+                }).catch(e => console.warn("POST changePassword backup:", e));
 
                 if (result.status === 'success') {
                     successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đổi Mật Khẩu Thành Công!</h6>` +
-                                          `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay.</p>`;
+                                          `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật trực tiếp vào hệ thống. Bạn có thể đăng nhập ngay với mật khẩu mới!</p>`;
                     successEl.classList.remove('d-none');
                     document.getElementById('resetPasswordContainer').classList.add('d-none');
                 } else {
