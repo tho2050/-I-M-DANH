@@ -474,13 +474,13 @@
         });
 
         async function handleLogin(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
-            const pwd = document.getElementById('adminPwdInput').value.trim().toLowerCase();
+            const pwd = document.getElementById('adminPwdInput').value.trim(); // Giữ nguyên chữ hoa chữ thường của mật khẩu
             
             // 0. Kiểm tra mật khẩu vừa đổi gần đây (Cho phép đăng nhập tức thì với mật khẩu mới)
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
-            if (localPsws[user] && pwd === localPsws[user].toLowerCase()) {
+            if (localPsws[user] && pwd === localPsws[user]) {
                 sessionStorage.setItem("admin_logged", "true");
                 const role = (user === "hongnhung@muce.edu.vn" || user === "dhxdmtmuce") ? "super" : "staff";
                 sessionStorage.setItem("admin_role", role);
@@ -492,7 +492,7 @@
             const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
             const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
             
-            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce"];
+            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345"];
             const allowedPasswordsStaff = ["admin123"];
 
             if (superUsers.includes(user) && (allowedPasswordsSuper.includes(pwd) || pwd === user)) {
@@ -509,10 +509,12 @@
             }
 
             // 2. Xác thực tài khoản động đăng ký lưu trên Google Sheet
-            const btn = e.submitter || document.querySelector('#loginFormContainer button[type="submit"]');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đăng nhập...';
+            const btn = e ? (e.submitter || document.querySelector('#loginFormContainer button[type="submit"]')) : null;
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đăng nhập...';
+            }
 
             try {
                 const response = await fetch(CONFIG.googleScriptUrl + '?action=login', {
@@ -522,7 +524,7 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     sessionStorage.setItem("admin_logged", "true");
-                    sessionStorage.setItem("admin_role", result.role);
+                    sessionStorage.setItem("admin_role", result.role || "staff");
                     showDashboard();
                 } else {
                     document.getElementById('loginError').textContent = result.message || "Tài khoản hoặc mật khẩu không chính xác!";
@@ -533,8 +535,10 @@
                 document.getElementById('loginError').classList.remove('d-none');
                 console.error(err);
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
             }
         }
 
@@ -909,13 +913,6 @@
                                       `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay với mật khẩu mới!</p>`;
                 successEl.classList.remove('d-none');
                 document.getElementById('resetPasswordContainer').classList.add('d-none');
-            }
-            } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới';
-                errorEl.textContent = "Lỗi kết nối mạng khi đổi mật khẩu!";
-                errorEl.classList.remove('d-none');
-                console.error("Lỗi lưu mật khẩu:", err);
             }
         }
 
