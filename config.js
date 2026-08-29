@@ -72,9 +72,11 @@ function saveActivities(list) {
     if (CONFIG.googleScriptUrl) {
         fetch(CONFIG.googleScriptUrl + '?action=saveActivities', {
             method: 'POST',
-            mode: 'no-cors',
             body: JSON.stringify(list)
-        }).catch(e => console.error("Lỗi đồng bộ lên cloud:", e));
+        })
+        .then(res => res.json())
+        .then(data => console.log("Đã đồng bộ sự kiện lên Google Sheets:", data))
+        .catch(e => console.error("Lỗi đồng bộ lên cloud:", e));
     }
 }
 
