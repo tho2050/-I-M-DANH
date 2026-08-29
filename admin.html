@@ -210,6 +210,7 @@
                     <a href="#" class="active" onclick="switchTab('manage-activities')" id="menu-manage"><i class="fa-solid fa-calendar-days"></i> Quản lý sự kiện</a>
                     <a href="#" onclick="switchTab('add-activity')" id="menu-add"><i class="fa-solid fa-plus-circle"></i> Thêm sự kiện mới</a>
                     <a href="#" onclick="switchTab('attendance-list')" id="menu-attendance"><i class="fa-solid fa-users-viewfinder"></i> Danh sách điểm danh</a>
+                    <a href="#" class="d-none" onclick="switchTab('approve-accounts')" id="menu-approve"><i class="fa-solid fa-user-check"></i> Duyệt tài khoản <span class="badge bg-danger rounded-pill ms-1 d-none" id="pendingBadge">0</span></a>
                 </div>
             </div>
 
@@ -336,6 +337,36 @@
 
                         <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnSubmitEvent"><i class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh</button>
                     </form>
+                </div>
+
+                <!-- Tab: Approve Accounts (Chỉ Super Admin thấy) -->
+                <div class="card card-custom p-4 d-none" id="tab-approve-accounts">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-user-shield text-primary me-2"></i>Duyệt tài khoản thành viên</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="fetchAccountsList()"><i class="fa-solid fa-rotate me-1"></i> Tải lại</button>
+                    </div>
+                    <p class="text-muted small mb-3">Các tài khoản nhân viên/thành viên mới đăng ký cần được Super Admin phê duyệt trước khi có thể đăng nhập.</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle" style="font-size: 0.85rem;" id="accountsTable">
+                            <thead class="table-dark text-nowrap">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên Đăng Nhập / Email</th>
+                                    <th>Mật Khẩu</th>
+                                    <th>Vai Trò</th>
+                                    <th>Ngày Đăng Ký</th>
+                                    <th>Trạng Thái</th>
+                                    <th class="text-center">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">Đang tải danh sách tài khoản...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -582,6 +613,11 @@
                 const result = await response.json();
 
                 if (result.status === 'success') {
+                    if (result.requiresApproval) {
+                        successEl.innerHTML = `<i class="fa-solid fa-clock me-1"></i> Đăng ký thành công! Tài khoản của bạn đang <strong>chờ Super Admin phê duyệt</strong> trước khi có thể đăng nhập.`;
+                    } else {
+                        successEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Đăng ký thành công! Bạn có thể quay lại đăng nhập ngay.`;
+                    }
                     successEl.classList.remove('d-none');
                     document.getElementById('regUsernameInput').value = '';
                     document.getElementById('regPwdInput').value = '';
@@ -731,14 +767,19 @@
             document.getElementById('adminDashboard').classList.remove('d-none');
             document.getElementById('btnLogout').classList.remove('d-none');
             
-            // Ẩn/Hiện nút xuất báo cáo Excel dựa theo vai trò tài khoản
+            // Ẩn/Hiện nút xuất báo cáo Excel và Menu Duyệt tài khoản dựa theo vai trò
             const role = sessionStorage.getItem("admin_role");
             const exportBtn = document.getElementById('btnExportExcel');
-            if (exportBtn) {
-                if (role === "staff") {
-                    exportBtn.style.display = 'none';
-                } else {
-                    exportBtn.style.display = 'inline-block';
+            const approveMenu = document.getElementById('menu-approve');
+            
+            if (role === "staff") {
+                if (exportBtn) exportBtn.style.display = 'none';
+                if (approveMenu) approveMenu.classList.add('d-none');
+            } else {
+                if (exportBtn) exportBtn.style.display = 'inline-block';
+                if (approveMenu) {
+                    approveMenu.classList.remove('d-none');
+                    fetchAccountsList(); // Lấy danh sách duyệt tài khoản cho Super Admin
                 }
             }
 
@@ -1083,10 +1124,13 @@
             if (tabId === 'manage-activities') document.getElementById('menu-manage').classList.add('active');
             else if (tabId === 'add-activity') document.getElementById('menu-add').classList.add('active');
             else if (tabId === 'attendance-list') document.getElementById('menu-attendance').classList.add('active');
+            else if (tabId === 'approve-accounts') document.getElementById('menu-approve').classList.add('active');
 
             document.getElementById('tab-manage-activities').classList.add('d-none');
             document.getElementById('tab-add-activity').classList.add('d-none');
             document.getElementById('tab-attendance-list').classList.add('d-none');
+            const approveTab = document.getElementById('tab-approve-accounts');
+            if (approveTab) approveTab.classList.add('d-none');
 
             document.getElementById('tab-' + tabId).classList.remove('d-none');
 
@@ -1114,6 +1158,116 @@
                 }, 250);
             } else if (tabId === 'attendance-list') {
                 fetchAttendanceData();
+            } else if (tabId === 'approve-accounts') {
+                fetchAccountsList();
+            }
+        }
+
+        // QUẢN LÝ VÀ PHÊ DUYỆT TÀI KHOẢN
+        let accountsData = [];
+
+        async function fetchAccountsList() {
+            const tbody = document.getElementById('accountsTableBody');
+            const badge = document.getElementById('pendingBadge');
+            if (!tbody) return;
+
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải danh sách tài khoản...</td></tr>`;
+
+            try {
+                const res = await fetch(CONFIG.googleScriptUrl + '?action=getAccounts&_t=' + Date.now());
+                const data = await res.json();
+
+                if (Array.isArray(data)) {
+                    accountsData = data;
+                    renderAccountsTable(data);
+                    
+                    const pendingCount = data.filter(a => a.status === 'pending').length;
+                    if (badge) {
+                        if (pendingCount > 0) {
+                            badge.textContent = pendingCount;
+                            badge.classList.remove('d-none');
+                        } else {
+                            badge.classList.add('d-none');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi lấy danh sách tài khoản:", err);
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Lỗi kết nối máy chủ Google Sheets khi lấy danh sách tài khoản.</td></tr>`;
+            }
+        }
+
+        function renderAccountsTable(data) {
+            const tbody = document.getElementById('accountsTableBody');
+            if (!tbody) return;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản đăng ký nào.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, idx) => {
+                const isPending = item.status === 'pending';
+                const statusBadge = isPending 
+                    ? `<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Chờ duyệt</span>`
+                    : `<span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Đã duyệt</span>`;
+
+                const roleBadge = item.role === 'super'
+                    ? `<span class="badge bg-danger">Super Admin</span>`
+                    : `<span class="badge bg-info text-dark">Staff / Nhân viên</span>`;
+
+                const actionBtns = isPending 
+                    ? `<button class="btn btn-sm btn-success fw-bold me-1" onclick="approveAccount('${item.username}')"><i class="fa-solid fa-check me-1"></i>Phê Duyệt</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i></button>`
+                    : `<button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>`;
+
+                return `
+                    <tr class="text-nowrap">
+                        <td>${idx + 1}</td>
+                        <td class="font-monospace fw-bold">${item.username}</td>
+                        <td class="font-monospace text-muted">${item.password}</td>
+                        <td>${roleBadge}</td>
+                        <td class="small text-muted">${item.regDate || '--'}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center">${actionBtns}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function approveAccount(username) {
+            if (!confirm(`Bạn có chắc chắn muốn phê duyệt cho tài khoản "${username}" đăng nhập vào hệ thống?`)) return;
+
+            try {
+                const res = await fetch(CONFIG.googleScriptUrl + '?action=approveAccount&username=' + encodeURIComponent(username) + '&_t=' + Date.now());
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert(`Đã phê duyệt tài khoản "${username}" thành công!`);
+                    fetchAccountsList();
+                } else {
+                    alert('Lỗi phê duyệt: ' + data.message);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ Google Sheets!');
+                console.error(err);
+            }
+        }
+
+        async function deleteAccount(username) {
+            if (!confirm(`Bạn có chắc chắn muốn XÓA tài khoản "${username}"?`)) return;
+
+            try {
+                const res = await fetch(CONFIG.googleScriptUrl + '?action=deleteAccount&username=' + encodeURIComponent(username) + '&_t=' + Date.now());
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert(`Đã xóa tài khoản "${username}" thành công!`);
+                    fetchAccountsList();
+                } else {
+                    alert('Lỗi xóa tài khoản: ' + data.message);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ Google Sheets!');
+                console.error(err);
             }
         }
 
