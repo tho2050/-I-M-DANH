@@ -666,22 +666,11 @@
                 return;
             }
 
-            // Kiểm tra xem tên đăng nhập có hợp lệ không
-            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
-            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
-            const allUsers = superUsers.concat(staffUsers);
+            // Kiểm tra bảo mật: Email phải chứa tên đăng nhập hoặc trùng khớp hoàn toàn
+            let emailPrefix = email.split('@')[0].toLowerCase();
+            let userPrefix = user.split('@')[0].toLowerCase();
 
-            if (!allUsers.includes(user)) {
-                errorEl.textContent = "Tên đăng nhập không tồn tại trong hệ thống quản trị!";
-                errorEl.classList.remove('d-none');
-                return;
-            }
-
-            // Kiểm tra bảo mật: Email phải bắt đầu bằng tên đăng nhập hoặc trùng khớp hoàn toàn
-            let emailPrefix = email.split('@')[0];
-            let userPrefix = user.split('@')[0];
-
-            if (emailPrefix !== userPrefix) {
+            if (emailPrefix !== userPrefix && user.toLowerCase() !== email.toLowerCase()) {
                 errorEl.textContent = "Email nhận mã OTP không khớp với tên đăng nhập của tài khoản này!";
                 errorEl.classList.remove('d-none');
                 return;
@@ -693,7 +682,7 @@
             try {
                 const response = await fetch(CONFIG.googleScriptUrl + '?action=sendOtp', {
                     method: 'POST',
-                    body: JSON.stringify({ email: email })
+                    body: JSON.stringify({ user: user, email: email })
                 });
                 const result = await response.json();
 
@@ -710,7 +699,7 @@
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = 'Gửi Mã OTP Về Gmail';
-                errorEl.textContent = "Lỗi kết nối Server Google Sheets! Vui lòng thử lại sau.";
+                errorEl.textContent = "Lỗi kết nối mạng khi gửi OTP!";
                 errorEl.classList.remove('d-none');
                 console.error("Lỗi gửi OTP:", err);
             }
@@ -741,18 +730,13 @@
             try {
                 const response = await fetch(CONFIG.googleScriptUrl + '?action=verifyOtp', {
                     method: 'POST',
-                    body: JSON.stringify({ email: email, otp: otp })
+                    body: JSON.stringify({ user: user, email: email, otp: otp })
                 });
                 const result = await response.json();
 
                 if (result.status === 'success') {
-                    // Xác thực thành công! Lấy mật khẩu tương ứng để hiển thị
-                    let passwordText = "";
-                    if (user === "hongnhung@muce.edu.vn" || user === "dhxdmtmuce") {
-                        passwordText = "<strong>Mật khẩu của bạn là:</strong> <span class='text-danger fw-bold fs-5'>admin123</span> hoặc <span class='text-danger fw-bold fs-5'>nhung2011</span> (Quyền Super Admin)";
-                    } else {
-                        passwordText = "<strong>Mật khẩu của bạn là:</strong> <span class='text-danger fw-bold fs-5'>admin123</span> (Quyền Nhân Viên)";
-                    }
+                    const retrievedPwd = result.password || "admin123";
+                    const passwordText = `<strong>Mật khẩu của tài khoản "${user}" là:</strong> <span class='text-danger fw-bold fs-5'>${retrievedPwd}</span>`;
 
                     successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Xác thực OTP Thành Công!</h6>` +
                                           `<p class="mb-0 mt-2">${passwordText}</p>`;
