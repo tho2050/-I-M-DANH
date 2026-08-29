@@ -42,12 +42,19 @@ function saveActivities(list) {
     localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanList));
     
     if (CONFIG.googleScriptUrl) {
-        // Gửi dữ liệu qua GET query param kèm timestamp chống cache trên trình duyệt di động
         const encodedData = encodeURIComponent(JSON.stringify(cleanList));
+        
+        // 1. Đồng bộ qua GET parameter (Chống lỗi 302 redirect trên di động)
         fetch(CONFIG.googleScriptUrl + '?action=saveActivities&data=' + encodedData + '&_t=' + Date.now())
             .then(res => res.json())
-            .then(data => console.log("Đã đồng bộ sự kiện lên Google Sheets:", data))
-            .catch(e => console.error("Lỗi đồng bộ lên cloud:", e));
+            .then(data => console.log("Đã đồng bộ sự kiện lên Google Sheets (GET):", data))
+            .catch(e => console.error("Lỗi đồng bộ GET:", e));
+
+        // 2. Đồng bộ qua POST payload dự phòng
+        fetch(CONFIG.googleScriptUrl + '?action=saveActivities', {
+            method: 'POST',
+            body: JSON.stringify(cleanList)
+        }).catch(e => console.error("Lỗi đồng bộ POST:", e));
     }
 }
 
