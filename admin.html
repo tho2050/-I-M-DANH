@@ -1216,12 +1216,27 @@
             const tbody = document.getElementById('accountsTableBody');
             if (!tbody) return;
 
-            if (data.length === 0) {
+            const defaultAccounts = [
+                { username: "Hongnhung@muce.edu.vn", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
+                { username: "dhxdmtmuce", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
+                { username: "nguyennuhongnhung", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
+                { username: "dhxhmt", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
+                { username: "nguyenthithuhien", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true }
+            ];
+
+            const combinedList = [...defaultAccounts];
+            (data || []).forEach(item => {
+                if (item && item.username && !combinedList.some(a => a.username.toLowerCase() === item.username.toLowerCase())) {
+                    combinedList.push(item);
+                }
+            });
+
+            if (combinedList.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản đăng ký nào.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = data.map((item, idx) => {
+            tbody.innerHTML = combinedList.map((item, idx) => {
                 const isPending = item.status === 'pending';
                 const statusBadge = isPending 
                     ? `<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Chờ duyệt</span>`
@@ -1231,10 +1246,15 @@
                     ? `<span class="badge bg-danger">Super Admin</span>`
                     : `<span class="badge bg-info text-dark">Staff / Nhân viên</span>`;
 
-                const actionBtns = isPending 
-                    ? `<button class="btn btn-sm btn-success fw-bold me-1" onclick="approveAccount('${item.username}')"><i class="fa-solid fa-check me-1"></i>Phê Duyệt</button>
-                       <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i></button>`
-                    : `<button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>`;
+                let actionBtns = '';
+                if (item.isDefault) {
+                    actionBtns = `<span class="badge bg-secondary"><i class="fa-solid fa-shield-halved me-1"></i>Tài khoản hệ thống</span>`;
+                } else if (isPending) {
+                    actionBtns = `<button class="btn btn-sm btn-success fw-bold me-1" onclick="approveAccount('${item.username}')"><i class="fa-solid fa-check me-1"></i>Phê Duyệt</button>
+                                   <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i></button>`;
+                } else {
+                    actionBtns = `<button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>`;
+                }
 
                 return `
                     <tr class="text-nowrap">
