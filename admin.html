@@ -1724,12 +1724,14 @@
             const tbody = document.getElementById('accountsTableBody');
             if (!tbody) return;
 
+            const deletedAccounts = JSON.parse(localStorage.getItem("deleted_accounts") || "[]").map(u => u.toLowerCase());
+
             const defaultAccounts = [
-                { username: "Hongnhung@muce.edu.vn", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
-                { username: "dhxdmtmuce", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
-                { username: "nguyennuhongnhung", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
-                { username: "dhxhmt", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true },
-                { username: "nguyenthithuhien", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved", isDefault: true }
+                { username: "Hongnhung@muce.edu.vn", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
+                { username: "dhxdmtmuce", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
+                { username: "nguyennuhongnhung", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved" },
+                { username: "dhxhmt", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved" },
+                { username: "nguyenthithuhien", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved" }
             ];
 
             const combinedList = [...defaultAccounts];
@@ -1739,14 +1741,17 @@
                 }
             });
 
-            if (combinedList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản đăng ký nào.</td></tr>`;
+            // Lọc bỏ những tài khoản đã bị Super Admin xóa
+            const filteredList = combinedList.filter(item => item && item.username && !deletedAccounts.includes(item.username.toLowerCase()));
+
+            if (filteredList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
                 return;
             }
 
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
 
-            tbody.innerHTML = combinedList.map((item, idx) => {
+            tbody.innerHTML = filteredList.map((item, idx) => {
                 const isPending = item.status === 'pending';
                 const displayPwd = localPsws[item.username.toLowerCase()] || item.password;
 
@@ -1759,13 +1764,15 @@
                     : `<span class="badge bg-info text-dark">Staff / Nhân viên</span>`;
 
                 let actionBtns = '';
-                if (item.isDefault) {
-                    actionBtns = `<span class="badge bg-secondary"><i class="fa-solid fa-shield-halved me-1"></i>Tài khoản hệ thống</span>`;
-                } else if (isPending) {
-                    actionBtns = `<button class="btn btn-sm btn-success fw-bold me-1" onclick="approveAccount('${item.username}')"><i class="fa-solid fa-check me-1"></i>Phê Duyệt</button>
-                                   <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i></button>`;
+                if (isPending) {
+                    actionBtns = `
+                        <button class="btn btn-sm btn-success fw-bold me-1" onclick="approveAccount('${item.username}')" title="Phê duyệt"><i class="fa-solid fa-check me-1"></i>Phê Duyệt</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')" title="Xóa tài khoản"><i class="fa-solid fa-trash me-1"></i>Xóa</button>
+                    `;
                 } else {
-                    actionBtns = `<button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>`;
+                    actionBtns = `
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount('${item.username}')" title="Xóa tài khoản"><i class="fa-solid fa-trash me-1"></i>Xóa</button>
+                    `;
                 }
 
                 return `
@@ -1795,7 +1802,6 @@
 
             try {
                 const res = await fetch(CONFIG.googleScriptUrl + '?action=approveAccount&username=' + encodeURIComponent(username) + '&_t=' + Date.now());
-                const data = await res.json();
                 alert(`Đã phê duyệt tài khoản "${username}" thành công!`);
             } catch (err) {
                 alert(`Đã phê duyệt tài khoản "${username}" thành công!`);
@@ -1804,15 +1810,28 @@
         }
 
         async function deleteAccount(username) {
-            if (!confirm(`Bạn có chắc chắn muốn XÓA tài khoản "${username}"?`)) return;
+            if (username.toLowerCase() === 'hongnhung@muce.edu.vn') {
+                if (!confirm(`CẢNH BÁO: Đây là tài khoản Super Admin chính ("${username}"). Bạn có chắc chắn muốn xóa tài khoản này?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`Bạn có chắc chắn muốn XÓA tài khoản "${username}" khỏi hệ thống?`)) return;
+            }
 
-            // Xóa tài khoản cục bộ
+            // Ghi nhận vào danh sách tài khoản đã xóa
+            let deleted = JSON.parse(localStorage.getItem("deleted_accounts") || "[]");
+            if (!deleted.map(u => u.toLowerCase()).includes(username.toLowerCase())) {
+                deleted.push(username.toLowerCase());
+                localStorage.setItem("deleted_accounts", JSON.stringify(deleted));
+            }
+
+            // Xóa khỏi registered_accounts
             let localAccs = getLocalRegisteredAccounts();
             localAccs = localAccs.filter(a => a.username.toLowerCase() !== username.toLowerCase());
             saveLocalRegisteredAccounts(localAccs);
 
             try {
-                await fetch(CONFIG.googleScriptUrl + '?action=deleteAccount&username=' + encodeURIComponent(username) + '&_t=' + Date.now());
+                fetch(CONFIG.googleScriptUrl + '?action=deleteAccount&username=' + encodeURIComponent(username) + '&_t=' + Date.now()).catch(e => console.warn(e));
                 alert(`Đã xóa tài khoản "${username}" thành công!`);
             } catch (err) {
                 alert(`Đã xóa tài khoản "${username}" thành công!`);
