@@ -111,14 +111,29 @@ function doGet(e) {
       return createJsonResponse({ status: 'success', message: 'Approved' });
     }
 
-    // 6. LƯU SỰ KIỆN GET FALLBACK
+    // 6. XÓA SỰ KIỆN KHỎI SHEET ACT
+    if (action === 'deleteActivity') {
+      const targetCode = String(params.code || '').toUpperCase().trim();
+      let actSheet = ss.getSheetByName('Act') || ss.getSheetByName('Activities');
+      if (actSheet && targetCode) {
+        const data = actSheet.getDataRange().getValues();
+        for (let i = data.length - 1; i >= 1; i--) {
+          if (String(data[i][0]).toUpperCase().trim() === targetCode) {
+            actSheet.deleteRow(i + 1);
+          }
+        }
+      }
+      return createJsonResponse({ status: 'success', message: 'Deleted activity' });
+    }
+
+    // 7. LƯU SỰ KIỆN GET FALLBACK
     if (action === 'saveActivities' && params.data) {
       const body = JSON.parse(decodeURIComponent(params.data));
       saveActivitiesToSheet(ss, body.activities || body.list || body);
       return createJsonResponse({ status: 'success' });
     }
 
-    // 7. MẶC ĐỊNH: LẤY TOÀN BỘ DANH SÁCH ĐIỂM DANH TỪ TẤT CẢ CÁC SHEET KHOA
+    // 8. MẶC ĐỊNH: LẤY TOÀN BỘ DANH SÁCH ĐIỂM DANH TỪ TẤT CẢ CÁC SHEET KHOA
     const allRecords = [];
     const sheets = ss.getSheets();
     const excludeSheetNames = ['act', 'activities', 'accounts', 'config'];

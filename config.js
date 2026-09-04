@@ -19,6 +19,7 @@ function deduplicateActivities(list) {
     const unique = [];
     const seenKeys = new Set();
     const oldSampleCodes = ["SVTN2026", "WORKSHOP-AI", "TINHOC-ABC"];
+    const deletedCodes = (JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]")).map(c => String(c).toUpperCase().trim());
 
     // Duyệt từ bản ghi mới nhất đến cũ nhất
     for (let i = list.length - 1; i >= 0; i--) {
@@ -27,8 +28,8 @@ function deduplicateActivities(list) {
         const code = item.code ? String(item.code).trim().toUpperCase() : '';
         const title = item.title ? String(item.title).trim() : '';
         
-        // Bỏ qua các sự kiện mẫu cũ mặc định nếu người dùng không dùng
-        if (code && oldSampleCodes.includes(code)) continue;
+        // Bỏ qua các sự kiện đã bị người dùng xóa hoặc mã mẫu cũ
+        if (code && (oldSampleCodes.includes(code) || deletedCodes.includes(code))) continue;
 
         let lat = parseFloat(item.latitude !== undefined ? item.latitude : (item.lat !== undefined ? item.lat : 0));
         let lng = parseFloat(item.longitude !== undefined ? item.longitude : (item.lng !== undefined ? item.lng : 0));

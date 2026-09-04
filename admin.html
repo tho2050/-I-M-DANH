@@ -1457,6 +1457,11 @@
                 editingIndex = -1; // Reset
             }
 
+            // Gỡ khỏi danh sách đã xóa nếu tạo mới lại cùng mã
+            let deletedCodes = JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]");
+            deletedCodes = deletedCodes.filter(c => c.toUpperCase() !== code.toUpperCase());
+            localStorage.setItem("deleted_activity_codes", JSON.stringify(deletedCodes));
+
             saveActivities(list);
 
             // Mở khóa lại ô mã sự kiện
@@ -1474,11 +1479,30 @@
         }
 
         function deleteActivity(idx) {
-            if (confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
-                const list = getActivities();
+            const list = getActivities();
+            const target = list[idx];
+            if (!target) return;
+
+            if (confirm(`Bạn có chắc chắn muốn XÓA sự kiện "${target.title}" (Mã: ${target.code})?`)) {
+                const targetCode = String(target.code || '').toUpperCase().trim();
+                
+                // 1. Lưu vào danh sách sự kiện đã xóa vĩnh viễn
+                let deletedCodes = JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]");
+                if (targetCode && !deletedCodes.includes(targetCode)) {
+                    deletedCodes.push(targetCode);
+                    localStorage.setItem("deleted_activity_codes", JSON.stringify(deletedCodes));
+                }
+
+                // 2. Xóa khỏi danh sách hiện tại
                 list.splice(idx, 1);
                 saveActivities(list);
                 renderActivities();
+
+                // 3. Đồng bộ xóa trên Google Apps Script
+                if (CONFIG.googleScriptUrl && targetCode) {
+                    fetch(CONFIG.googleScriptUrl + '?action=deleteActivity&code=' + encodeURIComponent(targetCode) + '&_t=' + Date.now())
+                        .catch(e => console.warn("Lỗi đồng bộ xóa sự kiện lên cloud:", e));
+                }
             }
         }
 
