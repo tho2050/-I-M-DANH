@@ -498,19 +498,26 @@
             }
 
             // 1. Kiểm tra tài khoản mặc định tĩnh trước (đăng nhập tức thì)
-            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce"];
-            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
+            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung"];
+            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien", "ptk@gmail.com", "ptk"];
             
-            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345"];
-            const allowedPasswordsStaff = ["admin123"];
+            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345", "Nnhn2005@", "nnhn2005@"];
+            const allowedPasswordsStaff = ["admin123", "12345"];
 
-            if (superUsers.includes(user) && (allowedPasswordsSuper.includes(pwd) || pwd === user)) {
+            const isSuperUserMatch = superUsers.includes(user) || user.includes("hongnhung") || user.includes("dhxdmt");
+            const isSuperPwdMatch = allowedPasswordsSuper.includes(pwd) || pwd === user || pwd.toLowerCase() === "nnhn2005@" || pwd === "nhung2011" || pwd === "admin123";
+
+            if (isSuperUserMatch && isSuperPwdMatch) {
                 sessionStorage.setItem("admin_logged", "true");
                 sessionStorage.setItem("admin_role", "super");
                 showDashboard();
                 return;
             }
-            if (staffUsers.includes(user) && (allowedPasswordsStaff.includes(pwd) || pwd === user)) {
+
+            const isStaffUserMatch = staffUsers.includes(user) || user.includes("ptk");
+            const isStaffPwdMatch = allowedPasswordsStaff.includes(pwd) || pwd === "12345" || pwd === "admin123";
+
+            if (isStaffUserMatch && isStaffPwdMatch) {
                 sessionStorage.setItem("admin_logged", "true");
                 sessionStorage.setItem("admin_role", "staff");
                 showDashboard();
