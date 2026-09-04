@@ -2331,6 +2331,41 @@
             return false;
         }
 
+        // Thứ tự ưu tiên sắp xếp cố định theo Khoa:
+        // 1. Khoa Kỹ thuật Công nghệ
+        // 2. Khoa Kinh tế
+        // 3. Khoa Xây dựng
+        // 4. Khoa Kiến trúc
+        function getFacultyOrder(facultyStr) {
+            if (!facultyStr) return 99;
+            const norm = removeVietnameseTones(facultyStr);
+            if (norm.includes('ky thuat') || norm.includes('cong nghe') || norm.includes('cntt') || norm.includes('it') || norm.includes('dien') || norm.includes('co khi')) {
+                return 1;
+            }
+            if (norm.includes('kinh te') || norm.includes('quan tri') || norm.includes('ke toan') || norm.includes('tai chinh')) {
+                return 2;
+            }
+            if (norm.includes('xay dung') || norm.includes('cau duong') || norm.includes('cong trinh')) {
+                return 3;
+            }
+            if (norm.includes('kien truc') || norm.includes('quy hoach') || norm.includes('noi that')) {
+                return 4;
+            }
+            return 5;
+        }
+
+        function sortAttendanceByFaculty(records) {
+            if (!Array.isArray(records)) return [];
+            return [...records].sort((a, b) => {
+                const orderA = getFacultyOrder(a.faculty);
+                const orderB = getFacultyOrder(b.faculty);
+                if (orderA !== orderB) {
+                    return orderA - orderB;
+                }
+                return 0;
+            });
+        }
+
         // LỌC DỮ LIỆU ĐIỂM DANH
         function filterAttendanceTable() {
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
@@ -2358,7 +2393,10 @@
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });
-            renderAttendanceTable(filtered);
+
+            // Tự động sắp xếp cố định theo Khoa: Công Nghệ -> Kinh Tế -> Xây Dựng -> Kiến Trúc
+            const sorted = sortAttendanceByFaculty(filtered);
+            renderAttendanceTable(sorted);
         }
 
         // CHUẨN BỊ DỮ LIỆU BẢNG ĐIỂM DANH CHO SHEETJS (XLSX)
@@ -2446,8 +2484,9 @@
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
 
-                // 1. Sheet Tổng Hợp (Tất cả 4 khoa)
-                const wsAll = createAttendanceSheetData(baseData);
+                // 1. Sheet Tổng Hợp (Tất cả 4 khoa - Tự động sắp xếp theo thứ tự 4 khoa)
+                const sortedBaseData = sortAttendanceByFaculty(baseData);
+                const wsAll = createAttendanceSheetData(sortedBaseData);
                 XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả 4 Khoa");
 
                 // 2. Sheet Khoa Kỹ Thuật Công Nghệ
@@ -2591,17 +2630,19 @@
                 return;
             }
 
+            const sortedFiltered = sortAttendanceByFaculty(filtered);
+
             let facultyTag = facultyFilter ? removeVietnameseTones(facultyFilter).replace(/\s+/g, '_').toUpperCase() : '';
             let actTag = actFilter ? actFilter.toUpperCase() : 'Tat_Ca';
             const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0, 10)}`;
 
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
-                const ws = createAttendanceSheetData(filtered);
+                const ws = createAttendanceSheetData(sortedFiltered);
                 XLSX.utils.book_append_sheet(wb, ws, facultyFilter ? facultyFilter.substring(0, 30) : "Điểm Danh");
                 XLSX.writeFile(wb, filename + '.xlsx');
             } else {
-                exportSingleCsv(filtered, filename + '.csv');
+                exportSingleCsv(sortedFiltered, filename + '.csv');
             }
         }
 
