@@ -1215,11 +1215,9 @@
             const user = (sessionStorage.getItem("admin_user") || '').toLowerCase().trim();
             const allowed = [
                 "hongnhung2050py@gmail.com",
-                "hongnhung@muce.edu.vn",
-                "hongnhung2050py",
-                "dhxdmtmuce"
+                "hongnhung2050py"
             ];
-            return allowed.includes(user) || user.includes("hongnhung");
+            return allowed.includes(user);
         }
 
         function showDashboard() {
@@ -2117,7 +2115,7 @@
                     phoneNumber: phone,
                     email: email,
                     distance: "0.0m (Thủ công)",
-                    device: "Super Admin (hongnhung@muce.edu.vn)",
+                    device: "Super Admin (hongnhung2050py@gmail.com)",
                     coords: coords,
                     ip: "Admin Panel"
                 };
@@ -2139,7 +2137,7 @@
                     phoneNumber: phone,
                     email: email,
                     distance: "0.0m (Thủ công)",
-                    device: "Super Admin (hongnhung@muce.edu.vn)",
+                    device: "Super Admin (hongnhung2050py@gmail.com)",
                     coords: coords,
                     ip: "Admin Panel (Thủ công)",
                     deviceUuid: "manual_admin"
