@@ -1561,64 +1561,79 @@
             const tbody = document.getElementById('attendanceTableBody');
             tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu điểm danh...</td></tr>`;
 
-            // Cập nhật bộ lọc sự kiện dropdown
-            const filterSelect = document.getElementById('attendanceActivityFilter');
-            const currentSelected = filterSelect ? filterSelect.value : '';
-            const acts = getActivities();
-            filterSelect.innerHTML = '<option value="">-- Tất cả sự kiện --</option>';
-            const addedCodes = new Set();
-
-            acts.forEach(a => {
-                const code = String(a.code || '').trim();
-                if (code && !addedCodes.has(code.toLowerCase())) {
-                    addedCodes.add(code.toLowerCase());
-                    filterSelect.innerHTML += `<option value="${code}">${code} - ${a.title || ''}</option>`;
-                }
-            });
-
-            // Thêm các mã có trong dữ liệu điểm danh mà chưa có trong danh sách acts
-            if (Array.isArray(attendanceData)) {
-                attendanceData.forEach(item => {
-                    const c = String(item.code || '').trim();
-                    if (c && !addedCodes.has(c.toLowerCase())) {
-                        addedCodes.add(c.toLowerCase());
-                        const titleDisplay = item.title ? ` - ${item.title}` : '';
-                        filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
-                    }
-                });
-            }
-            if (currentSelected) {
-                filterSelect.value = currentSelected;
-            }
-
-            // Lấy dữ liệu điểm danh đã lưu cục bộ
-            const localRecords = localStorage.getItem("gps_attendance_local_records")
-                ? JSON.parse(localStorage.getItem("gps_attendance_local_records"))
-                : [];
-
-            function deduplicateAttendanceRecords(records) {
+            function cleanAndDeduplicateRecords(records) {
                 if (!Array.isArray(records)) return [];
                 const seen = new Set();
+                const invalidCodes = ['staff', 'super', 'mã sk', 'stt', 'role', 'username', 'password', 'code'];
+                
                 return records.filter(item => {
-                    if (!item) return false;
-                    const key = `${String(item.studentCode || '').trim()}_${String(item.code || '').trim()}_${String(item.timestamp || '').trim()}`;
+                    if (!item || typeof item !== 'object') return false;
+                    const code = String(item.code || '').trim().toLowerCase();
+                    const studentCode = String(item.studentCode || '').trim();
+                    const name = String(item.name || '').trim();
+
+                    // Bỏ qua các dòng tiêu đề hoặc dữ liệu nhầm từ sheet Accounts / Activities
+                    if (invalidCodes.includes(code)) return false;
+                    if (studentCode.toLowerCase() === 'mssv' || studentCode.toLowerCase() === 'password') return false;
+                    if (name.toLowerCase() === 'họ và tên' || name.toLowerCase() === 'role') return false;
+                    if (!code && !studentCode && !name) return false;
+
+                    const key = `${studentCode}_${code}_${String(item.timestamp || '').trim()}`;
                     if (seen.has(key)) return false;
                     seen.add(key);
                     return true;
                 });
             }
 
+            function updateActivityDropdown() {
+                const filterSelect = document.getElementById('attendanceActivityFilter');
+                if (!filterSelect) return;
+                const currentSelected = filterSelect.value || '';
+                const acts = getActivities();
+                
+                filterSelect.innerHTML = '<option value="">-- Tất cả sự kiện --</option>';
+                const addedCodes = new Set();
+
+                // 1. Thêm từ danh sách sự kiện chính thức
+                acts.forEach(a => {
+                    const code = String(a.code || '').trim();
+                    if (code && !addedCodes.has(code.toLowerCase())) {
+                        addedCodes.add(code.toLowerCase());
+                        filterSelect.innerHTML += `<option value="${code}">${code} - ${a.title || ''}</option>`;
+                    }
+                });
+
+                // 2. Thêm các mã có trong dữ liệu điểm danh thực tế (nếu chưa có)
+                if (Array.isArray(attendanceData)) {
+                    attendanceData.forEach(item => {
+                        const c = String(item.code || '').trim();
+                        if (c && !addedCodes.has(c.toLowerCase()) && c.length <= 30) {
+                            addedCodes.add(c.toLowerCase());
+                            const titleDisplay = item.title ? ` - ${item.title}` : '';
+                            filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
+                        }
+                    });
+                }
+
+                if (currentSelected && addedCodes.has(currentSelected.toLowerCase())) {
+                    filterSelect.value = currentSelected;
+                }
+            }
+
+            updateActivityDropdown();
+
+            // Lấy dữ liệu điểm danh đã lưu cục bộ
+            const localRecords = localStorage.getItem("gps_attendance_local_records")
+                ? JSON.parse(localStorage.getItem("gps_attendance_local_records"))
+                : [];
+
             const scriptUrl = CONFIG.googleScriptUrl;
             const hasRealConfig = scriptUrl && scriptUrl.trim() !== "";
 
             if (!hasRealConfig) {
                 setTimeout(() => {
-                    const mockData = [
-                        { timestamp: "27/08/2026 13:32:05", code: "SVTN2026", studentCode: "21000123", name: "Nguyễn Văn An", className: "CNTT-K21A", faculty: "Khoa Kỹ thuật Công nghệ", distance: "3.9m", device: "iPhone 15 Pro Max" },
-                        { timestamp: "27/08/2026 13:34:12", code: "SVTN2026", studentCode: "21000456", name: "Trần Thị Bình", className: "KT-K21A", faculty: "Khoa Kinh tế", distance: "12.4m", device: "Samsung Galaxy S24" },
-                        { timestamp: "27/08/2026 14:02:45", code: "WORKSHOP-AI", studentCode: "21000789", name: "Lê Văn Nam", className: "XD-K21B", faculty: "Khoa Xây dựng", distance: "45.1m", device: "Xiaomi 14 Ultra" }
-                    ];
-                    attendanceData = deduplicateAttendanceRecords([...localRecords, ...mockData]);
+                    attendanceData = cleanAndDeduplicateRecords(localRecords);
+                    updateActivityDropdown();
                     filterAttendanceTable();
                 }, 500);
                 return;
@@ -1627,25 +1642,13 @@
             try {
                 const res = await fetch(scriptUrl);
                 const sheetData = await res.json();
-                attendanceData = deduplicateAttendanceRecords([...localRecords, ...sheetData]);
-                
-                // Cập nhật lại dropdown với các sự kiện mới nhất từ Google Sheets
-                if (Array.isArray(attendanceData)) {
-                    attendanceData.forEach(item => {
-                        const c = String(item.code || '').trim();
-                        if (c && !addedCodes.has(c.toLowerCase())) {
-                            addedCodes.add(c.toLowerCase());
-                            const titleDisplay = item.title ? ` - ${item.title}` : '';
-                            filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
-                        }
-                    });
-                }
-                if (currentSelected) filterSelect.value = currentSelected;
-
+                attendanceData = cleanAndDeduplicateRecords([...localRecords, ...sheetData]);
+                updateActivityDropdown();
                 filterAttendanceTable();
             } catch (err) {
                 console.error("Lỗi khi fetch dữ liệu từ Google Apps Script", err);
-                attendanceData = deduplicateAttendanceRecords(localRecords);
+                attendanceData = cleanAndDeduplicateRecords(localRecords);
+                updateActivityDropdown();
                 filterAttendanceTable();
             }
         }
