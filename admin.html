@@ -1212,9 +1212,14 @@
         }
 
         function isHongNhungAdmin() {
-            const user = (sessionStorage.getItem("admin_user") || '').toLowerCase();
-            const role = sessionStorage.getItem("admin_role");
-            return user === "hongnhung@muce.edu.vn" || user.includes("hongnhung") || role === "super";
+            const user = (sessionStorage.getItem("admin_user") || '').toLowerCase().trim();
+            const allowed = [
+                "hongnhung2050py@gmail.com",
+                "hongnhung@muce.edu.vn",
+                "hongnhung2050py",
+                "dhxdmtmuce"
+            ];
+            return allowed.includes(user) || user.includes("hongnhung");
         }
 
         function showDashboard() {
@@ -2013,7 +2018,7 @@
         // MỞ MODAL THÊM / SỬA ĐIỂM DANH THỦ CÔNG (DÀNH CHO HONGNHUNG@MUCE.EDU.VN)
         function openManualAttendanceModal(editIdx) {
             if (!isHongNhungAdmin()) {
-                alert("Chỉ tài khoản Super Admin (hongnhung@muce.edu.vn) mới có quyền sử dụng chức năng này!");
+                alert("Chỉ tài khoản Quản trị viên chính mới có quyền sử dụng chức năng này!");
                 return;
             }
 
