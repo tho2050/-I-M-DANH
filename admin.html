@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trang Quản Trị - Hệ Thống Điểm Danh GPS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
 
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1e293b; min-height: 100vh; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
         .logo-responsive {
             height: 38px;
             background: white;
@@ -18,22 +26,67 @@
             border-radius: 6px;
             transition: all 0.2s ease;
         }
+
         @media (min-width: 768px) {
             .logo-responsive {
                 height: 55px;
                 padding: 4px 12px;
             }
         }
-        .navbar-custom { background: #0f172a; padding: 0.8rem 0; color: white; }
-        .navbar-custom .navbar-brand { font-weight: 800; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        
-        .login-container { max-width: 400px; margin: 5rem auto; }
-        .card-custom { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-        .sidebar-menu { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 1rem; }
-        .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: #475569; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; }
-        .sidebar-menu a:hover, .sidebar-menu a.active { background: #f1f5f9; color: #1a4b8c; }
-        
+        .navbar-custom {
+            background: #0f172a;
+            padding: 0.8rem 0;
+            color: white;
+        }
+
+        .navbar-custom .navbar-brand {
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 5rem auto;
+        }
+
+        .card-custom {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-menu {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: #475569;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #f1f5f9;
+            color: #1a4b8c;
+        }
+
         @media (max-width: 767.98px) {
             .sidebar-menu {
                 display: flex;
@@ -45,6 +98,7 @@
                 border-radius: 10px;
                 -webkit-overflow-scrolling: touch;
             }
+
             .sidebar-menu a {
                 margin-bottom: 0;
                 flex: 0 0 auto;
@@ -52,20 +106,55 @@
                 font-size: 0.82rem;
             }
         }
-        
-        #mapSelector { height: 280px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
-        .activity-item-row { border-bottom: 1px solid #e2e8f0; padding: 12px 0; }
-        .activity-item-row:last-child { border-bottom: none; }
 
-        .print-area { display: none; }
+        #mapSelector {
+            height: 280px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .activity-item-row {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 0;
+        }
+
+        .activity-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .print-area {
+            display: none;
+        }
+
         @media print {
-            body * { display: none; }
-            .print-area, .print-area * { display: block; }
-            .print-area { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; }
-            .print-qr-code { width: 300px; height: 300px; margin: 2rem 0; }
+            body * {
+                display: none;
+            }
+
+            .print-area,
+            .print-area * {
+                display: block;
+            }
+
+            .print-area {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+            }
+
+            .print-qr-code {
+                width: 300px;
+                height: 300px;
+                margin: 2rem 0;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <!-- NAV BAR -->
@@ -73,11 +162,14 @@
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand d-flex align-items-center" href="index.html" style="max-width: 75%;">
                 <img src="logo.png" alt="MUCE Logo" class="logo-responsive me-2">
-                <span class="small fw-bold text-warning d-none d-sm-inline" style="font-size: 0.8rem; margin-left: 8px;">[ADMIN]</span>
+                <span class="small fw-bold text-warning d-none d-sm-inline"
+                    style="font-size: 0.8rem; margin-left: 8px;">[ADMIN]</span>
             </a>
             <div class="d-flex gap-1 gap-sm-2">
-                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-house"></i><span class="d-none d-sm-inline ms-1">Trang Chủ</span></a>
-                <button class="btn btn-sm btn-danger d-none" id="btnLogout" onclick="logout()"><i class="fa-solid fa-sign-out"></i><span class="d-none d-sm-inline ms-1">Thoát</span></button>
+                <a href="index.html" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-house"></i><span
+                        class="d-none d-sm-inline ms-1">Trang Chủ</span></a>
+                <button class="btn btn-sm btn-danger d-none" id="btnLogout" onclick="logout()"><i
+                        class="fa-solid fa-sign-out"></i><span class="d-none d-sm-inline ms-1">Thoát</span></button>
             </div>
         </div>
     </nav>
@@ -90,26 +182,33 @@
                 <h4 class="mt-2 fw-bold">Đăng Nhập Admin</h4>
                 <p class="text-muted small">Cần mật khẩu để truy cập công cụ quản trị.</p>
             </div>
-            
+
             <!-- FORM ĐĂNG NHẬP -->
             <div id="loginFormContainer">
                 <form onsubmit="handleLogin(event)">
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
-                        <input type="text" class="form-control" id="adminUsernameInput" placeholder="" required autocomplete="username" />
+                        <input type="text" class="form-control" id="adminUsernameInput" placeholder="" required
+                            autocomplete="username" />
                     </div>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <label class="form-label fw-bold small mb-0">Mật khẩu:</label>
-                            <button type="button" id="btnForgotPwdTrigger" onclick="showForgotPassword(event)" class="btn btn-link p-0 small text-decoration-none text-primary fw-medium border-0 bg-transparent">Quên mật khẩu?</button>
+                            <button type="button" id="btnForgotPwdTrigger" onclick="showForgotPassword(event)"
+                                class="btn btn-link p-0 small text-decoration-none text-primary fw-medium border-0 bg-transparent">Quên
+                                mật khẩu?</button>
                         </div>
-                        <input type="password" class="form-control mt-1" id="adminPwdInput" placeholder="" required autocomplete="current-password" />
+                        <input type="password" class="form-control mt-1" id="adminPwdInput" placeholder="" required
+                            autocomplete="current-password" />
                     </div>
                     <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Xác Nhận Đăng Nhập</button>
                 </form>
-                <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
+                <div class="alert alert-danger mt-3 py-2 small d-none" id="loginError">Tài khoản hoặc mật khẩu không
+                    chính xác!</div>
                 <div class="text-center mt-3 border-top pt-2">
-                    <button type="button" id="btnRegisterTrigger" onclick="showRegisterForm(event)" class="btn btn-link p-0 small text-decoration-none text-secondary border-0 bg-transparent">Chưa có tài khoản? Đăng ký ngay</button>
+                    <button type="button" id="btnRegisterTrigger" onclick="showRegisterForm(event)"
+                        class="btn btn-link p-0 small text-decoration-none text-secondary border-0 bg-transparent">Chưa
+                        có tài khoản? Đăng ký ngay</button>
                 </div>
             </div>
 
@@ -117,23 +216,30 @@
             <div id="forgotFormContainer" class="d-none">
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Tên đăng nhập cần khôi phục:</label>
-                    <input type="text" class="form-control" id="forgotUsernameInput" placeholder="Nhập tên đăng nhập" required />
+                    <input type="text" class="form-control" id="forgotUsernameInput" placeholder="Nhập tên đăng nhập"
+                        required />
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Email nhận mã OTP:</label>
-                    <input type="email" class="form-control" id="forgotEmailInput" placeholder="Nhập địa chỉ email" required />
-                    <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Email phải bắt đầu bằng tên đăng nhập để xác thực tính chủ sở hữu.</span>
+                    <input type="email" class="form-control" id="forgotEmailInput" placeholder="Nhập địa chỉ email"
+                        required />
+                    <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Email phải
+                        bắt đầu bằng tên đăng nhập để xác thực tính chủ sở hữu.</span>
                 </div>
-                
-                <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="requestOtp(event)" id="btnSendOtp">Gửi Mã OTP Về Gmail</button>
+
+                <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="requestOtp(event)"
+                    id="btnSendOtp">Gửi Mã OTP Về Gmail</button>
                 <div class="alert alert-danger mt-2 py-2 small d-none" id="forgotError"></div>
-                <div class="alert alert-success mt-2 py-2 small d-none" id="forgotSentAlert">Đã gửi mã OTP. Vui lòng kiểm tra hộp thư đến (hoặc thư rác) trong Gmail của bạn!</div>
+                <div class="alert alert-success mt-2 py-2 small d-none" id="forgotSentAlert">Đã gửi mã OTP. Vui lòng
+                    kiểm tra hộp thư đến (hoặc thư rác) trong Gmail của bạn!</div>
 
                 <!-- Ô nhập mã OTP -->
                 <div id="otpInputContainer" class="d-none mt-3 border-top pt-3">
                     <label class="form-label fw-bold small">Nhập mã OTP (6 chữ số):</label>
-                    <input type="text" class="form-control text-center fw-bold fs-5" id="forgotOtpInput" maxlength="6" placeholder="------" style="letter-spacing: 5px;" />
-                    <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2" onclick="verifyOtp(event)" id="btnVerifyOtp">Xác Nhận Mã OTP</button>
+                    <input type="text" class="form-control text-center fw-bold fs-5" id="forgotOtpInput" maxlength="6"
+                        placeholder="------" style="letter-spacing: 5px;" />
+                    <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2" onclick="verifyOtp(event)"
+                        id="btnVerifyOtp">Xác Nhận Mã OTP</button>
                 </div>
 
                 <!-- Ô ĐẶT LẠI MẬT KHẨU MỚI (Hiện ra sau khi xác nhận OTP thành công) -->
@@ -141,19 +247,23 @@
                     <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-key me-1"></i>Đặt Lại Mật Khẩu Mới</h6>
                     <div class="mb-2">
                         <label class="form-label fw-bold small">Mật khẩu mới:</label>
-                        <input type="password" class="form-control" id="resetNewPwdInput" placeholder="Nhập mật khẩu mới..." required />
+                        <input type="password" class="form-control" id="resetNewPwdInput"
+                            placeholder="Nhập mật khẩu mới..." required />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Xác nhận mật khẩu mới:</label>
-                        <input type="password" class="form-control" id="resetConfirmPwdInput" placeholder="Nhập lại mật khẩu mới..." required />
+                        <input type="password" class="form-control" id="resetConfirmPwdInput"
+                            placeholder="Nhập lại mật khẩu mới..." required />
                     </div>
-                    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="saveNewPassword(event)" id="btnSaveNewPwd"><i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới</button>
+                    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="saveNewPassword(event)"
+                        id="btnSaveNewPwd"><i class="fa-solid fa-save me-1"></i>Lưu Mật Khẩu Mới</button>
                 </div>
-                
+
                 <div class="alert alert-success mt-3 py-2 small d-none text-break" id="forgotSuccessAlert"></div>
 
                 <div class="text-center mt-3 pt-2 border-top">
-                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
+                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i
+                            class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
                 </div>
             </div>
 
@@ -166,11 +276,13 @@
                 <form onsubmit="handleRegister(event)">
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Tên đăng nhập / Email:</label>
-                        <input type="text" class="form-control" id="regUsernameInput" placeholder="Nhập tên đăng nhập" required />
+                        <input type="text" class="form-control" id="regUsernameInput" placeholder="Nhập tên đăng nhập"
+                            required />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Mật khẩu:</label>
-                        <input type="password" class="form-control" id="regPwdInput" placeholder="Nhập mật khẩu..." required />
+                        <input type="password" class="form-control" id="regPwdInput" placeholder="Nhập mật khẩu..."
+                            required />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Vai trò (Quyền hạn):</label>
@@ -179,21 +291,26 @@
                             <option value="super">Super Admin / Quản trị cấp cao (Toàn quyền)</option>
                         </select>
                     </div>
-                    
+
                     <!-- Ô nhập mã bảo mật Admin -->
                     <div class="mb-3 d-none" id="adminCodeContainer">
                         <label class="form-label fw-bold small text-danger">Mã Admin bảo mật:</label>
-                        <input type="password" class="form-control border-danger" id="regAdminCodeInput" placeholder="Nhập mã xác nhận quản trị..." />
-                        <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Mã bảo mật của trường để cấp quyền Super Admin.</span>
+                        <input type="password" class="form-control border-danger" id="regAdminCodeInput"
+                            placeholder="Nhập mã xác nhận quản trị..." />
+                        <span class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 4px;">* Mã bảo
+                            mật của trường để cấp quyền Super Admin.</span>
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnRegister">Đăng Ký Tài Khoản</button>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnRegister">Đăng Ký Tài
+                        Khoản</button>
                 </form>
                 <div class="alert alert-danger mt-2 py-2 small d-none" id="regError"></div>
-                <div class="alert alert-success mt-2 py-2 small d-none" id="regSuccess">Đăng ký thành công! Bạn có thể quay lại đăng nhập.</div>
+                <div class="alert alert-success mt-2 py-2 small d-none" id="regSuccess">Đăng ký thành công! Bạn có thể
+                    quay lại đăng nhập.</div>
 
                 <div class="text-center mt-3 pt-2 border-top">
-                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
+                    <a href="#" onclick="showLoginForm(event)" class="small text-decoration-none text-secondary"><i
+                            class="fa-solid fa-arrow-left me-1"></i>Quay lại đăng nhập</a>
                 </div>
             </div>
         </div>
@@ -202,16 +319,22 @@
     <!-- MAIN ADMIN PANEL -->
     <div class="container py-4 d-none" id="adminDashboard">
         <!-- Localhost Warning Banner -->
-        <div class="alert alert-warning shadow-sm border-start border-warning border-4 mb-4" id="localhostWarning" style="display:none;">
+        <div class="alert alert-warning shadow-sm border-start border-warning border-4 mb-4" id="localhostWarning"
+            style="display:none;">
             <div class="d-flex align-items-start gap-3">
-                <i class="fa-solid fa-triangle-exclamation text-warning" style="font-size: 1.5rem; margin-top: 3px;"></i>
+                <i class="fa-solid fa-triangle-exclamation text-warning"
+                    style="font-size: 1.5rem; margin-top: 3px;"></i>
                 <div>
                     <h6 class="mb-1 fw-bold text-dark">Bạn đang truy cập qua Localhost</h6>
                     <p class="mb-0 small text-muted">
-                        Mã QR được in ra sẽ chứa địa chỉ <code>localhost</code>. Khi sinh viên quét bằng điện thoại sẽ <strong>bị báo lỗi không truy cập được</strong>.
+                        Mã QR được in ra sẽ chứa địa chỉ <code>localhost</code>. Khi sinh viên quét bằng điện thoại sẽ
+                        <strong>bị báo lỗi không truy cập được</strong>.
                     </p>
                     <p class="mb-0 mt-2 small text-muted">
-                        <strong>Cách khắc phục:</strong> Kết nối điện thoại và máy tính vào <strong>cùng mạng Wi-Fi</strong>. Tìm địa chỉ IP của máy tính (ví dụ: <code>192.168.1.15</code>), sau đó trên trình duyệt máy tính, hãy truy cập Admin qua đường dẫn IP đó: <code>http://[IP-của-máy]:5252/admin.html</code> rồi tiến hành in mã QR.
+                        <strong>Cách khắc phục:</strong> Kết nối điện thoại và máy tính vào <strong>cùng mạng
+                            Wi-Fi</strong>. Tìm địa chỉ IP của máy tính (ví dụ: <code>192.168.1.15</code>), sau đó trên
+                        trình duyệt máy tính, hãy truy cập Admin qua đường dẫn IP đó:
+                        <code>http://[IP-của-máy]:5252/admin.html</code> rồi tiến hành in mã QR.
                     </p>
                 </div>
             </div>
@@ -221,10 +344,15 @@
             <!-- Sidebar -->
             <div class="col-md-3">
                 <div class="sidebar-menu shadow-sm">
-                    <a href="#" class="active" onclick="switchTab('manage-activities')" id="menu-manage"><i class="fa-solid fa-calendar-days"></i> Quản lý sự kiện</a>
-                    <a href="#" onclick="switchTab('add-activity')" id="menu-add"><i class="fa-solid fa-plus-circle"></i> Thêm sự kiện mới</a>
-                    <a href="#" onclick="switchTab('attendance-list')" id="menu-attendance"><i class="fa-solid fa-users-viewfinder"></i> Danh sách điểm danh</a>
-                    <a href="#" class="d-none" onclick="switchTab('approve-accounts')" id="menu-approve"><i class="fa-solid fa-user-check"></i> Duyệt tài khoản <span class="badge bg-danger rounded-pill ms-1 d-none" id="pendingBadge">0</span></a>
+                    <a href="#" class="active" onclick="switchTab('manage-activities')" id="menu-manage"><i
+                            class="fa-solid fa-calendar-days"></i> Quản lý sự kiện</a>
+                    <a href="#" onclick="switchTab('add-activity')" id="menu-add"><i
+                            class="fa-solid fa-plus-circle"></i> Thêm sự kiện mới</a>
+                    <a href="#" onclick="switchTab('attendance-list')" id="menu-attendance"><i
+                            class="fa-solid fa-users-viewfinder"></i> Danh sách điểm danh</a>
+                    <a href="#" class="d-none" onclick="switchTab('approve-accounts')" id="menu-approve"><i
+                            class="fa-solid fa-user-check"></i> Duyệt tài khoản <span
+                            class="badge bg-danger rounded-pill ms-1 d-none" id="pendingBadge">0</span></a>
                 </div>
             </div>
 
@@ -232,7 +360,8 @@
             <div class="col-md-9">
                 <!-- Tab: Manage Activities -->
                 <div class="card card-custom p-4" id="tab-manage-activities">
-                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Danh sách sự kiện đang mở</h5>
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Danh sách sự kiện đang mở
+                    </h5>
                     <div id="activitiesListContainer">
                         <!-- Rendered by JS -->
                     </div>
@@ -241,33 +370,48 @@
                 <!-- Tab: Attendance List -->
                 <div class="card card-custom p-4 d-none" id="tab-attendance-list">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-primary me-2"></i>Danh sách sinh viên điểm danh</h5>
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-primary me-2"></i>Danh sách sinh viên
+                            điểm danh</h5>
                         <div class="d-flex gap-2 flex-wrap">
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-success fw-bold" onclick="exportMultiSheetExcel(event)">
                                     <i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel (4 Khoa)
                                 </button>
-                                <button type="button" class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                <button type="button"
+                                    class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                     <span class="visually-hidden">Tùy chọn xuất</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                                    <li><a class="dropdown-item fw-bold text-success" href="#" onclick="exportMultiSheetExcel(event)"><i class="fa-solid fa-table-cells me-2"></i>Xuất 1 File Excel (Gồm 4 Sheet Cho 4 Khoa)</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="exportFourSeparateFiles(event)"><i class="fa-solid fa-copy me-2"></i>Xuất 4 File Riêng Biệt Cho Từng Khoa</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="exportToExcel(event)"><i class="fa-solid fa-filter me-2"></i>Xuất Theo Bộ Lọc Đang Chọn</a></li>
+                                    <li><a class="dropdown-item fw-bold text-success" href="#"
+                                            onclick="exportMultiSheetExcel(event)"><i
+                                                class="fa-solid fa-table-cells me-2"></i>Xuất 1 File Excel (Gồm 4 Sheet
+                                            4 Khoa + Tổng hợp)</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportFourSeparateFiles(event)"><i
+                                                class="fa-solid fa-copy me-2"></i>Xuất 4 File Riêng Biệt Cho Từng
+                                            Khoa</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportToExcel(event)"><i
+                                                class="fa-solid fa-filter me-2"></i>Xuất Theo Bộ Lọc Đang Chọn</a></li>
                                 </ul>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="fetchAttendanceData()"><i class="fa-solid fa-rotate me-1"></i> Tải lại</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="fetchAttendanceData()"><i
+                                    class="fa-solid fa-rotate me-1"></i> Tải lại</button>
                         </div>
                     </div>
-                    
+
                     <!-- Filters -->
                     <div class="row g-2 mb-3">
                         <div class="col-md-5">
-                            <input type="text" id="attendanceSearch" class="form-control form-control-sm" placeholder="Tìm tên, MSSV, lớp, khoa, SĐT..." oninput="filterAttendanceTable()" />
+                            <input type="text" id="attendanceSearch" class="form-control form-control-sm"
+                                placeholder="Tìm tên, MSSV, lớp, khoa, SĐT..." oninput="filterAttendanceTable()" />
                         </div>
                         <div class="col-md-4">
-                            <select id="attendanceFacultyFilter" class="form-select form-select-sm" onchange="filterAttendanceTable()">
+                            <select id="attendanceFacultyFilter" class="form-select form-select-sm"
+                                onchange="filterAttendanceTable()">
+                                <option value="">-- Tất cả các khoa --</option>
                                 <option value="Khoa Kỹ thuật Công nghệ">Khoa Kỹ thuật Công nghệ</option>
                                 <option value="Khoa Kinh tế">Khoa Kinh tế</option>
                                 <option value="Khoa Xây dựng">Khoa Xây dựng</option>
@@ -275,7 +419,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select id="attendanceActivityFilter" class="form-select form-select-sm" onchange="filterAttendanceTable()">
+                            <select id="attendanceActivityFilter" class="form-select form-select-sm"
+                                onchange="filterAttendanceTable()">
                                 <option value="">-- Tất cả sự kiện --</option>
                             </select>
                         </div>
@@ -283,7 +428,8 @@
 
                     <!-- Table -->
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle" style="font-size: 0.82rem;" id="attendanceTable">
+                        <table class="table table-striped table-hover align-middle" style="font-size: 0.82rem;"
+                            id="attendanceTable">
                             <thead class="table-dark text-nowrap">
                                 <tr>
                                     <th>STT</th>
@@ -304,7 +450,8 @@
                             </thead>
                             <tbody id="attendanceTableBody">
                                 <tr>
-                                    <td colspan="15" class="text-center py-4 text-muted">Đang tải dữ liệu điểm danh...</td>
+                                    <td colspan="15" class="text-center py-4 text-muted">Đang tải dữ liệu điểm danh...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -313,32 +460,40 @@
 
                 <!-- Tab: Add Activity -->
                 <div class="card card-custom p-4 d-none" id="tab-add-activity">
-                    <h5 class="fw-bold mb-3" id="addTabHeader"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo sự kiện điểm danh mới</h5>
+                    <h5 class="fw-bold mb-3" id="addTabHeader"><i
+                            class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo sự kiện điểm danh mới</h5>
                     <form onsubmit="handleCreateActivity(event)" id="eventForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small">Mã hoạt động:</label>
-                                <input type="text" class="form-control" id="newCode" placeholder="Nhập mã sự kiện" required style="text-transform: uppercase;" />
+                                <input type="text" class="form-control" id="newCode" placeholder="Nhập mã sự kiện"
+                                    required style="text-transform: uppercase;" />
                             </div>
                             <div class="col-md-8">
-                                <label class="form-label fw-bold small">Tên sự kiện <span class="text-danger">*</span>:</label>
-                                <input type="text" class="form-control" id="newTitle" placeholder="Nhập tên sự kiện" required />
+                                <label class="form-label fw-bold small">Tên sự kiện <span
+                                        class="text-danger">*</span>:</label>
+                                <input type="text" class="form-control" id="newTitle" placeholder="Nhập tên sự kiện"
+                                    required />
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Mô tả sự kiện:</label>
-                            <textarea class="form-control" id="newDescription" rows="2" placeholder="Nội dung mô tả ngắn về sự kiện..."></textarea>
+                            <textarea class="form-control" id="newDescription" rows="2"
+                                placeholder="Nội dung mô tả ngắn về sự kiện..."></textarea>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-8 position-relative">
                                 <label class="form-label fw-bold small">Địa điểm tổ chức quy định:</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="newLocation" placeholder="VD: 195 Hà Huy Tập, Buôn Ma Thuột" required />
-                                    <button type="button" class="btn btn-primary" onclick="searchAddress(event)"><i class="fa-solid fa-magnifying-glass-location"></i> Tìm vị trí</button>
+                                    <input type="text" class="form-control" id="newLocation"
+                                        placeholder="VD: 195 Hà Huy Tập, Buôn Ma Thuột" required />
+                                    <button type="button" class="btn btn-primary" onclick="searchAddress(event)"><i
+                                            class="fa-solid fa-magnifying-glass-location"></i> Tìm vị trí</button>
                                 </div>
-                                <div id="addressSuggestions" class="list-group shadow-sm position-absolute d-none" style="z-index: 1050; max-width: 500px;"></div>
+                                <div id="addressSuggestions" class="list-group shadow-sm position-absolute d-none"
+                                    style="z-index: 1050; max-width: 500px;"></div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small">Bán kính điểm danh (mét):</label>
@@ -358,32 +513,39 @@
                         </div>
 
                         <div class="alert alert-info py-2 small">
-                            <i class="fa-solid fa-map-pin me-1"></i> **Click chọn vị trí trên bản đồ bên dưới** để tự động điền tọa độ Vĩ độ & Kinh độ.
+                            <i class="fa-solid fa-map-pin me-1"></i> **Click chọn vị trí trên bản đồ bên dưới** để tự
+                            động điền tọa độ Vĩ độ & Kinh độ.
                         </div>
 
                         <div id="mapSelector"></div>
 
                         <div class="mb-4">
                             <label class="form-label fw-bold small">Tọa độ GPS (Vĩ độ, Kinh độ):</label>
-                            <input type="text" class="form-control" id="newCoords" placeholder="Tọa độ GPS (Vĩ độ, Kinh độ)" required />
+                            <input type="text" class="form-control" id="newCoords"
+                                placeholder="Tọa độ GPS (Vĩ độ, Kinh độ)" required />
                             <input type="hidden" id="newLat" />
                             <input type="hidden" id="newLng" />
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnSubmitEvent"><i class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh</button>
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnSubmitEvent"><i
+                                class="fa-solid fa-save me-2"></i>Tạo Sự Kiện Điểm Danh</button>
                     </form>
                 </div>
 
                 <!-- Tab: Approve Accounts (Chỉ Super Admin thấy) -->
                 <div class="card card-custom p-4 d-none" id="tab-approve-accounts">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-user-shield text-primary me-2"></i>Duyệt tài khoản thành viên</h5>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="fetchAccountsList()"><i class="fa-solid fa-rotate me-1"></i> Tải lại</button>
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-user-shield text-primary me-2"></i>Duyệt tài
+                            khoản thành viên</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="fetchAccountsList()"><i
+                                class="fa-solid fa-rotate me-1"></i> Tải lại</button>
                     </div>
-                    <p class="text-muted small mb-3">Các tài khoản nhân viên/thành viên mới đăng ký cần được Super Admin phê duyệt trước khi có thể đăng nhập.</p>
+                    <p class="text-muted small mb-3">Các tài khoản nhân viên/thành viên mới đăng ký cần được Super Admin
+                        phê duyệt trước khi có thể đăng nhập.</p>
 
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle" style="font-size: 0.85rem;" id="accountsTable">
+                        <table class="table table-striped table-hover align-middle" style="font-size: 0.85rem;"
+                            id="accountsTable">
                             <thead class="table-dark text-nowrap">
                                 <tr>
                                     <th>STT</th>
@@ -397,22 +559,30 @@
                             </thead>
                             <tbody id="accountsTableBody">
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">Đang tải danh sách tài khoản...</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">Đang tải danh sách tài khoản...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Cấu hình Mã Admin Bảo Mật -->
-                    <div class="card border border-warning shadow-sm p-3 mt-4" style="background-color: #fffbeb; border-radius: 12px;">
-                        <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-key text-warning me-2"></i>Đổi Mã Admin Bảo Mật (Đăng ký Super Admin)</h6>
-                        <p class="text-muted small mb-2">Đưa mã bảo mật này cho người bạn muốn cấp quyền đăng ký Super Admin. Bạn có thể thay đổi mã này bất cứ lúc nào.</p>
+                    <div class="card border border-warning shadow-sm p-3 mt-4"
+                        style="background-color: #fffbeb; border-radius: 12px;">
+                        <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-key text-warning me-2"></i>Đổi Mã Admin
+                            Bảo Mật (Đăng ký Super Admin)</h6>
+                        <p class="text-muted small mb-2">Đưa mã bảo mật này cho người bạn muốn cấp quyền đăng ký Super
+                            Admin. Bạn có thể thay đổi mã này bất cứ lúc nào.</p>
                         <div class="row g-2 align-items-center">
                             <div class="col-md-6 col-lg-5">
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-warning"></i></span>
-                                    <input type="text" class="form-control font-monospace fw-bold" id="adminSecretCodeInput" placeholder="Nhập mã bảo mật mới" />
-                                    <button class="btn btn-warning fw-bold text-dark px-3" onclick="updateAdminSecretCode()"><i class="fa-solid fa-save me-1"></i>Lưu Mã Mới</button>
+                                    <span class="input-group-text bg-white"><i
+                                            class="fa-solid fa-lock text-warning"></i></span>
+                                    <input type="text" class="form-control font-monospace fw-bold"
+                                        id="adminSecretCodeInput" placeholder="Nhập mã bảo mật mới" />
+                                    <button class="btn btn-warning fw-bold text-dark px-3"
+                                        onclick="updateAdminSecretCode()"><i class="fa-solid fa-save me-1"></i>Lưu Mã
+                                        Mới</button>
                                 </div>
                             </div>
                         </div>
@@ -428,7 +598,8 @@
         <h4 style="color: #475569; margin: 1rem 0;" id="printCode">MÃ SỰ KIỆN: ---</h4>
         <div class="print-qr-code d-flex justify-content-center" id="printQrContainer"></div>
         <p style="font-size: 1.2rem; max-width: 600px;">
-            Sinh viên mở Camera điện thoại quét mã QR trên để xác thực vị trí GPS trong bán kính quy định (<b id="printRadius">50m</b>) và hoàn tất điền thông tin điểm danh.
+            Sinh viên mở Camera điện thoại quét mã QR trên để xác thực vị trí GPS trong bán kính quy định (<b
+                id="printRadius">50m</b>) và hoàn tất điền thông tin điểm danh.
         </p>
     </div>
 
@@ -436,30 +607,43 @@
     <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
-                <div class="modal-header bg-dark text-white py-3" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
-                    <h5 class="modal-title fw-bold" id="qrModalLabel"><i class="fa-solid fa-qrcode text-warning me-2"></i>Mã QR Điểm Danh</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-dark text-white py-3"
+                    style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h5 class="modal-title fw-bold" id="qrModalLabel"><i
+                            class="fa-solid fa-qrcode text-warning me-2"></i>Mã QR Điểm Danh</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center p-4">
                     <h4 class="fw-bold mb-1 text-primary" id="qrModalTitle">Sự kiện</h4>
-                    <p class="text-muted small mb-3">Mã hoạt động: <span class="badge bg-secondary font-monospace" id="qrModalCode">CODE</span></p>
-                    
+                    <p class="text-muted small mb-3">Mã hoạt động: <span class="badge bg-secondary font-monospace"
+                            id="qrModalCode">CODE</span></p>
+
                     <!-- Khung vẽ QR Code -->
                     <div class="d-flex justify-content-center my-4">
-                        <div id="qrModalCanvasContainer" style="padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);"></div>
+                        <div id="qrModalCanvasContainer"
+                            style="padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
+                        </div>
                     </div>
-                    
-                    <p class="text-danger small mb-3"><i class="fa-solid fa-circle-exclamation me-1"></i>Học sinh cần đứng trong phạm vi <strong id="qrModalRadius">50</strong>m để điểm danh.</p>
-                    
-                    <div class="alert alert-light border small text-start py-2 px-3 mb-0 text-break" style="background-color: #f8fafc; border-radius: 10px;">
-                        <strong>Đường dẫn điểm danh:</strong><br/>
-                        <span class="font-monospace text-primary" id="qrModalLink" style="font-size: 0.78rem;">https://...</span>
+
+                    <p class="text-danger small mb-3"><i class="fa-solid fa-circle-exclamation me-1"></i>Học sinh cần
+                        đứng trong phạm vi <strong id="qrModalRadius">50</strong>m để điểm danh.</p>
+
+                    <div class="alert alert-light border small text-start py-2 px-3 mb-0 text-break"
+                        style="background-color: #f8fafc; border-radius: 10px;">
+                        <strong>Đường dẫn điểm danh:</strong><br />
+                        <span class="font-monospace text-primary" id="qrModalLink"
+                            style="font-size: 0.78rem;">https://...</span>
                     </div>
                 </div>
-                <div class="modal-footer bg-light d-flex gap-2 p-3" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
-                    <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-info text-white flex-grow-1 fw-bold" id="btnDownloadQr"><i class="fa-solid fa-download me-1"></i>Tải Ảnh QR</button>
-                    <button type="button" class="btn btn-primary flex-grow-1 fw-bold" id="btnPrintQrPage"><i class="fa-solid fa-print me-1"></i>In QR Bản Mềm</button>
+                <div class="modal-footer bg-light d-flex gap-2 p-3"
+                    style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1"
+                        data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-info text-white flex-grow-1 fw-bold" id="btnDownloadQr"><i
+                            class="fa-solid fa-download me-1"></i>Tải Ảnh QR</button>
+                    <button type="button" class="btn btn-primary flex-grow-1 fw-bold" id="btnPrintQrPage"><i
+                            class="fa-solid fa-print me-1"></i>In QR Bản Mềm</button>
                 </div>
             </div>
         </div>
@@ -480,9 +664,9 @@
             if (isLogged === "true") {
                 showDashboard();
             }
-            
 
-            
+
+
             // Lấy IP nội bộ của server để tạo QR hoạt động được trên điện thoại
             fetch('/api/server-info')
                 .then(res => res.json())
@@ -499,7 +683,7 @@
             if (e) e.preventDefault();
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value.trim(); // Giữ nguyên chữ hoa chữ thường của mật khẩu
-            
+
             // 0. Kiểm tra mật khẩu vừa đổi gần đây (Cho phép đăng nhập tức thì với mật khẩu mới)
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
             if (localPsws[user] && pwd === localPsws[user]) {
@@ -513,7 +697,7 @@
             // 1. Kiểm tra tài khoản mặc định tĩnh trước (đăng nhập tức thì)
             const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung"];
             const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien", "ptk@gmail.com", "ptk"];
-            
+
             const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345", "Nnhn2005@", "nnhn2005@"];
             const allowedPasswordsStaff = ["admin123", "12345"];
 
@@ -605,10 +789,10 @@
             if (loginForm) loginForm.classList.add('d-none');
             if (forgotForm) forgotForm.classList.remove('d-none');
             if (regForm) regForm.classList.add('d-none');
-            
+
             const forgotErr = document.getElementById('forgotError');
             if (forgotErr) forgotErr.classList.add('d-none');
-            
+
             const forgotSent = document.getElementById('forgotSentAlert');
             if (forgotSent) forgotSent.classList.add('d-none');
 
@@ -666,10 +850,10 @@
             if (loginForm) loginForm.classList.add('d-none');
             if (forgotForm) forgotForm.classList.add('d-none');
             if (regForm) regForm.classList.remove('d-none');
-            
+
             const regErr = document.getElementById('regError');
             if (regErr) regErr.classList.add('d-none');
-            
+
             const regSucc = document.getElementById('regSuccess');
             if (regSucc) regSucc.classList.add('d-none');
 
@@ -854,7 +1038,7 @@
                     document.getElementById('otpInputContainer').classList.add('d-none');
                     document.getElementById('forgotSentAlert').classList.add('d-none');
                     document.getElementById('resetPasswordContainer').classList.remove('d-none');
-                    
+
                     successEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Xác thực OTP thành công! Vui lòng nhập mật khẩu mới bên dưới.`;
                     successEl.classList.remove('d-none');
                     sessionStorage.removeItem("admin_recovery_otp");
@@ -907,7 +1091,7 @@
                 let result = {};
                 try {
                     result = await response.json();
-                } catch(e) { console.warn("Parse json error:", e); }
+                } catch (e) { console.warn("Parse json error:", e); }
 
                 // 2. Gửi qua POST dự phòng
                 fetch(CONFIG.googleScriptUrl + '?action=changePassword', {
@@ -922,13 +1106,13 @@
 
                 if (result.status === 'success' || response.ok) {
                     successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đổi Mật Khẩu Thành Công!</h6>` +
-                                          `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật thành công. Bạn có thể quay lại đăng nhập ngay với mật khẩu mới!</p>`;
+                        `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật thành công. Bạn có thể quay lại đăng nhập ngay với mật khẩu mới!</p>`;
                     successEl.classList.remove('d-none');
                     document.getElementById('resetPasswordContainer').classList.add('d-none');
                 } else {
                     // Ngay cả khi Google Script báo phản hồi chậm, vẫn ghi nhận đổi thành công
                     successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đổi Mật Khẩu Thành Công!</h6>` +
-                                          `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay!</p>`;
+                        `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay!</p>`;
                     successEl.classList.remove('d-none');
                     document.getElementById('resetPasswordContainer').classList.add('d-none');
                 }
@@ -939,7 +1123,7 @@
                 localStorage.setItem("changed_passwords", JSON.stringify(localPsws));
 
                 successEl.innerHTML = `<h6 class="alert-heading fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đổi Mật Khẩu Thành Công!</h6>` +
-                                      `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay với mật khẩu mới!</p>`;
+                    `<p class="mb-0 mt-2">Mật khẩu mới của tài khoản <strong>"${user}"</strong> đã được cập nhật. Bạn có thể quay lại đăng nhập ngay với mật khẩu mới!</p>`;
                 successEl.classList.remove('d-none');
                 document.getElementById('resetPasswordContainer').classList.add('d-none');
             }
@@ -949,12 +1133,12 @@
             document.getElementById('loginPanel').classList.add('d-none');
             document.getElementById('adminDashboard').classList.remove('d-none');
             document.getElementById('btnLogout').classList.remove('d-none');
-            
+
             // Ẩn/Hiện nút xuất báo cáo Excel và Menu Duyệt tài khoản dựa theo vai trò
             const role = sessionStorage.getItem("admin_role");
             const exportBtn = document.getElementById('btnExportExcel');
             const approveMenu = document.getElementById('menu-approve');
-            
+
             if (role === "staff") {
                 if (exportBtn) exportBtn.style.display = 'none';
                 if (approveMenu) approveMenu.classList.add('d-none');
@@ -996,7 +1180,7 @@
                             const city = f.properties.city || f.properties.town || f.properties.county || '';
                             const country = f.properties.country || '';
                             const address = [name, street, city, country].filter(x => x).join(', ');
-                            
+
                             if (address) {
                                 document.getElementById('newLocation').value = address;
                             }
@@ -1072,7 +1256,8 @@
                         <button class="btn btn-sm btn-danger" onclick="deleteActivity(${idx})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-            `;}).join('');
+            `;
+            }).join('');
         }
 
         // Helpers convert datetime-local <-> hh:mm DD/MM/YYYY
@@ -1103,7 +1288,7 @@
         function handleCreateActivity(e) {
             e.preventDefault();
             const list = getActivities();
-            
+
             let lat = parseFloat(document.getElementById('newLat').value);
             let lng = parseFloat(document.getElementById('newLng').value);
 
@@ -1160,7 +1345,7 @@
             }
 
             saveActivities(list);
-            
+
             // Mở khóa lại ô mã sự kiện
             document.getElementById('newCode').disabled = false;
 
@@ -1170,7 +1355,7 @@
             document.getElementById('newLng').value = '';
             document.getElementById('newCoords').value = '';
             if (selectMarker && selectMap) selectMap.removeLayer(selectMarker);
-            
+
             switchTab('manage-activities');
             renderActivities();
         }
@@ -1197,7 +1382,7 @@
             // Đổi tiêu đề tab và nút bấm
             document.getElementById('addTabHeader').innerHTML = '<i class="fa-solid fa-pencil me-2 text-info"></i>Chỉnh sửa thông tin sự kiện';
             document.getElementById('btnSubmitEvent').innerHTML = '<i class="fa-solid fa-save me-2"></i>Lưu Thay Đổi';
-            
+
             // Khóa trường Mã sự kiện không cho sửa
             document.getElementById('newCode').value = act.code || '';
             document.getElementById('newCode').disabled = true;
@@ -1209,7 +1394,7 @@
             document.getElementById('newRadius').value = act.radiusMeters || act.radius || 50;
             document.getElementById('newStart').value = parseFriendlyToDateTimeLocal(act.startTime || act.start);
             document.getElementById('newEnd').value = parseFriendlyToDateTimeLocal(act.endTime || act.end);
-            
+
             const lat = parseFloat(act.latitude) || 0;
             const lng = parseFloat(act.longitude) || 0;
             document.getElementById('newLat').value = lat ? lat.toFixed(6) : '';
@@ -1244,7 +1429,7 @@
                 // Sử dụng Photon API (không giới hạn Rate Limit và không chặn Vercel)
                 const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
                 const data = await res.json();
-                
+
                 const suggestionsContainer = document.getElementById('addressSuggestions');
                 suggestionsContainer.innerHTML = '';
 
@@ -1265,7 +1450,7 @@
                         const lat = item.geometry.coordinates[1];
                         const lon = item.geometry.coordinates[0];
                         const name = formatPhotonName(item.properties);
-                        
+
                         const option = document.createElement('button');
                         option.type = 'button';
                         option.className = 'list-group-item list-group-item-action small text-start py-2';
@@ -1305,7 +1490,7 @@
             document.getElementById('newLat').value = latitude.toFixed(6);
             document.getElementById('newLng').value = longitude.toFixed(6);
             document.getElementById('newCoords').value = latitude.toFixed(6) + ", " + longitude.toFixed(6);
-            
+
             // Cập nhật ô nhập địa chỉ bằng tên đầy đủ đề xuất
             document.getElementById('newLocation').value = displayName;
 
@@ -1315,7 +1500,7 @@
             // Cập nhật bản đồ
             if (selectMap) {
                 selectMap.setView([latitude, longitude], 16);
-                
+
                 if (selectMarker) {
                     selectMarker.setLatLng([latitude, longitude]);
                 } else {
@@ -1336,7 +1521,7 @@
 
         function switchTab(tabId, isProgrammatic = false) {
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-            
+
             // Highlight menu tương ứng
             if (tabId === 'manage-activities') document.getElementById('menu-manage').classList.add('active');
             else if (tabId === 'add-activity') document.getElementById('menu-add').classList.add('active');
@@ -1360,7 +1545,7 @@
                     if (f) f.reset();
                     if (selectMarker && selectMap) selectMap.removeLayer(selectMarker);
                 }
-                
+
                 // Khôi phục chữ ban đầu nếu không phải chế độ sửa đổi
                 if (editingIndex === -1) {
                     document.getElementById('addTabHeader').innerHTML = '<i class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo sự kiện điểm danh mới';
@@ -1397,7 +1582,7 @@
                 if (Array.isArray(data)) {
                     accountsData = data;
                     renderAccountsTable(data);
-                    
+
                     const pendingCount = data.filter(a => a.status === 'pending').length;
                     if (badge) {
                         if (pendingCount > 0) {
@@ -1408,7 +1593,7 @@
                         }
                     }
                 }
-                
+
                 // Tải thêm mã Admin bảo mật hiện tại
                 fetchAdminSecretCode();
             } catch (err) {
@@ -1447,7 +1632,7 @@
                 const isPending = item.status === 'pending';
                 const displayPwd = localPsws[item.username.toLowerCase()] || item.password;
 
-                const statusBadge = isPending 
+                const statusBadge = isPending
                     ? `<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Chờ duyệt</span>`
                     : `<span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Đã duyệt</span>`;
 
@@ -1593,7 +1778,7 @@
                 filterSelect.innerHTML = '<option value="">-- Tất cả sự kiện --</option>';
                 const addedCodes = new Set();
 
-                // 1. Thêm từ danh sách sự kiện chính thức
+                // Đồng bộ chính xác 100% với Danh sách sự kiện đang mở trong tab Quản lý sự kiện
                 acts.forEach(a => {
                     const code = String(a.code || '').trim();
                     if (code && !addedCodes.has(code.toLowerCase())) {
@@ -1601,18 +1786,6 @@
                         filterSelect.innerHTML += `<option value="${code}">${code} - ${a.title || ''}</option>`;
                     }
                 });
-
-                // 2. Thêm các mã có trong dữ liệu điểm danh thực tế (nếu chưa có)
-                if (Array.isArray(attendanceData)) {
-                    attendanceData.forEach(item => {
-                        const c = String(item.code || '').trim();
-                        if (c && !addedCodes.has(c.toLowerCase()) && c.length <= 30) {
-                            addedCodes.add(c.toLowerCase());
-                            const titleDisplay = item.title ? ` - ${item.title}` : '';
-                            filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
-                        }
-                    });
-                }
 
                 if (currentSelected && addedCodes.has(currentSelected.toLowerCase())) {
                     filterSelect.value = currentSelected;
@@ -1694,7 +1867,7 @@
         function matchFaculty(itemFaculty, selectedFaculty) {
             if (!selectedFaculty) return true;
             if (!itemFaculty) return false;
-            
+
             const normItem = removeVietnameseTones(itemFaculty);
             const normSel = removeVietnameseTones(selectedFaculty);
 
@@ -1768,36 +1941,6 @@
             return false;
         }
 
-        // Xác định thứ tự ưu tiên sắp xếp cố định cho 4 Khoa:
-        // 1. Khoa Kỹ thuật Công nghệ (Khoa KT - Công Nghệ)
-        // 2. Khoa Kinh tế (Khoa Kinh Tế)
-        // 3. Khoa Xây dựng (Khoa Xây Dựng)
-        // 4. Khoa Kiến trúc (Khoa Kiến Trúc)
-        function getFacultyOrder(facultyName) {
-            if (!facultyName) return 99;
-            const f = removeVietnameseTones(String(facultyName)).toLowerCase();
-            if (f.includes('ky thuat') || f.includes('cong nghe') || f.includes('cntt') || f.includes('it') || f.includes('dien') || f.includes('co khi')) return 1;
-            if (f.includes('kinh te') || f.includes('quan tri') || f.includes('ke toan') || f.includes('tai chinh')) return 2;
-            if (f.includes('xay dung') || f.includes('cau duong') || f.includes('cong trinh')) return 3;
-            if (f.includes('kien truc') || f.includes('quy hoach') || f.includes('noi that')) return 4;
-            return 99;
-        }
-
-        // Tự động sắp xếp danh sách điểm danh theo thứ tự 4 Khoa, cùng khoa thì sắp theo thời gian/MSSV
-        function sortRecordsByFaculty(records) {
-            if (!Array.isArray(records)) return [];
-            return [...records].sort((a, b) => {
-                const orderA = getFacultyOrder(a.faculty);
-                const orderB = getFacultyOrder(b.faculty);
-                if (orderA !== orderB) {
-                    return orderA - orderB;
-                }
-                const timeA = String(a.timestamp || '');
-                const timeB = String(b.timestamp || '');
-                return timeA.localeCompare(timeB);
-            });
-        }
-
         // LỌC DỮ LIỆU ĐIỂM DANH
         function filterAttendanceTable() {
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
@@ -1812,29 +1955,26 @@
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
 
-                const matchesSearch = !searchQuery || 
-                                      nameStr.includes(searchQuery) ||
-                                      codeStr.includes(searchQuery) ||
-                                      classStr.includes(searchQuery) ||
-                                      facultyStr.includes(searchQuery) ||
-                                      phoneStr.includes(searchQuery) ||
-                                      emailStr.includes(searchQuery);
+                const matchesSearch = !searchQuery ||
+                    nameStr.includes(searchQuery) ||
+                    codeStr.includes(searchQuery) ||
+                    classStr.includes(searchQuery) ||
+                    facultyStr.includes(searchQuery) ||
+                    phoneStr.includes(searchQuery) ||
+                    emailStr.includes(searchQuery);
 
                 const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
                 const matchesActivity = matchActivity(item, actFilter);
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });
-
-            const sorted = sortRecordsByFaculty(filtered);
-            renderAttendanceTable(sorted);
+            renderAttendanceTable(filtered);
         }
 
         // CHUẨN BỊ DỮ LIỆU BẢNG ĐIỂM DANH CHO SHEETJS (XLSX)
         function createAttendanceSheetData(records) {
-            const sortedRecords = sortRecordsByFaculty(records);
             const header = ["STT", "Thời Gian", "Mã Sự Kiện", "Tên Sự Kiện", "MSSV", "Họ và Tên", "Lớp", "Khoa", "Số Điện Thoại", "Gmail", "Khoảng Cách", "Thiết Bị", "Tọa độ sự kiện", "IP Máy"];
-            const rows = sortedRecords.map((item, idx) => [
+            const rows = records.map((item, idx) => [
                 idx + 1,
                 item.timestamp || '',
                 item.code || '',
@@ -1896,13 +2036,13 @@
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
 
-                const matchesSearch = !searchQuery || 
-                                      nameStr.includes(searchQuery) ||
-                                      codeStr.includes(searchQuery) ||
-                                      classStr.includes(searchQuery) ||
-                                      facultyStr.includes(searchQuery) ||
-                                      phoneStr.includes(searchQuery) ||
-                                      emailStr.includes(searchQuery);
+                const matchesSearch = !searchQuery ||
+                    nameStr.includes(searchQuery) ||
+                    codeStr.includes(searchQuery) ||
+                    classStr.includes(searchQuery) ||
+                    facultyStr.includes(searchQuery) ||
+                    phoneStr.includes(searchQuery) ||
+                    emailStr.includes(searchQuery);
 
                 const matchesActivity = matchActivity(item, actFilter);
                 return matchesSearch && matchesActivity;
@@ -1916,22 +2056,26 @@
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
 
-                // 1. Sheet Khoa Kỹ Thuật Công Nghệ
+                // 1. Sheet Tổng Hợp (Tất cả 4 khoa)
+                const wsAll = createAttendanceSheetData(baseData);
+                XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả 4 Khoa");
+
+                // 2. Sheet Khoa Kỹ Thuật Công Nghệ
                 const dataKTCN = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kỹ thuật Công nghệ'));
                 const wsKTCN = createAttendanceSheetData(dataKTCN);
                 XLSX.utils.book_append_sheet(wb, wsKTCN, "Khoa KT - Công Nghệ");
 
-                // 2. Sheet Khoa Kinh Tế
+                // 3. Sheet Khoa Kinh Tế
                 const dataKT = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kinh tế'));
                 const wsKT = createAttendanceSheetData(dataKT);
                 XLSX.utils.book_append_sheet(wb, wsKT, "Khoa Kinh Tế");
 
-                // 3. Sheet Khoa Xây Dựng
+                // 4. Sheet Khoa Xây Dựng
                 const dataXD = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Xây dựng'));
                 const wsXD = createAttendanceSheetData(dataXD);
                 XLSX.utils.book_append_sheet(wb, wsXD, "Khoa Xây Dựng");
 
-                // 4. Sheet Khoa Kiến Trúc
+                // 5. Sheet Khoa Kiến Trúc
                 const dataKTruc = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kiến trúc'));
                 const wsKTruc = createAttendanceSheetData(dataKTruc);
                 XLSX.utils.book_append_sheet(wb, wsKTruc, "Khoa Kiến Trúc");
@@ -1975,9 +2119,9 @@
                             const wb = XLSX.utils.book_new();
                             const ws = createAttendanceSheetData(facData);
                             XLSX.utils.book_append_sheet(wb, ws, fac.key);
-                            XLSX.writeFile(wb, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0,10)}.xlsx`);
+                            XLSX.writeFile(wb, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0, 10)}.xlsx`);
                         } else {
-                            exportSingleCsv(facData, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0,10)}.csv`);
+                            exportSingleCsv(facData, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0, 10)}.csv`);
                         }
                     }
                 }, i * 350);
@@ -2038,13 +2182,13 @@
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
 
-                const matchesSearch = !searchQuery || 
-                                      nameStr.includes(searchQuery) ||
-                                      codeStr.includes(searchQuery) ||
-                                      classStr.includes(searchQuery) ||
-                                      facultyStr.includes(searchQuery) ||
-                                      phoneStr.includes(searchQuery) ||
-                                      emailStr.includes(searchQuery);
+                const matchesSearch = !searchQuery ||
+                    nameStr.includes(searchQuery) ||
+                    codeStr.includes(searchQuery) ||
+                    classStr.includes(searchQuery) ||
+                    facultyStr.includes(searchQuery) ||
+                    phoneStr.includes(searchQuery) ||
+                    emailStr.includes(searchQuery);
 
                 const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
                 const matchesActivity = matchActivity(item, actFilter);
@@ -2059,7 +2203,7 @@
 
             let facultyTag = facultyFilter ? removeVietnameseTones(facultyFilter).replace(/\s+/g, '_').toUpperCase() : '';
             let actTag = actFilter ? actFilter.toUpperCase() : 'Tat_Ca';
-            const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0,10)}`;
+            const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0, 10)}`;
 
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
@@ -2092,7 +2236,7 @@
             const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
 
             // Mã hóa đầy đủ thông số vào URL QR code (gửi kèm qr=true để ẩn 3 nút điều hướng)
-            const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html' 
+            const checkinUrl = baseOrigin + (dirPath === '/' ? '' : dirPath) + '/checkin.html'
                 + '?code=' + encodeURIComponent(code)
                 + '&title=' + encodeURIComponent(title)
                 + '&lat=' + lat
@@ -2118,7 +2262,7 @@
             document.getElementById('qrModalCode').textContent = code;
             document.getElementById('qrModalRadius').textContent = radius;
             document.getElementById('qrModalLink').textContent = checkinUrl;
-            
+
             const modalContainer = document.getElementById('qrModalCanvasContainer');
             modalContainer.innerHTML = '';
             new QRCode(modalContainer, {
@@ -2158,4 +2302,5 @@
         }
     </script>
 </body>
+
 </html>
