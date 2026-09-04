@@ -325,7 +325,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('activitiesGrid');
 
-            function render(list) {
+            function render(rawList) {
+                const list = typeof deduplicateActivities === 'function' ? deduplicateActivities(rawList) : (rawList || []);
                 if (list.length === 0) {
                     grid.innerHTML = `<div class="text-center py-5"><h5 class="text-muted">Không có sự kiện nào.</h5></div>`;
                     return;

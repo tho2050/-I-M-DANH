@@ -1020,7 +1020,7 @@
         }
 
         function renderActivities() {
-            const list = getActivities();
+            const list = typeof deduplicateActivities === 'function' ? deduplicateActivities(getActivities()) : getActivities();
             const container = document.getElementById('activitiesListContainer');
             if (list.length === 0) {
                 container.innerHTML = `<div class="text-center py-4 text-muted">Không có sự kiện nào. Hãy nhấn "Thêm sự kiện mới".</div>`;

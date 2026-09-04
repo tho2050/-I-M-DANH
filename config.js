@@ -20,7 +20,9 @@ function deduplicateActivities(list) {
     const seenKeys = new Set();
     const oldSampleCodes = ["SVTN2026", "WORKSHOP-AI", "TINHOC-ABC"];
 
-    for (const item of list) {
+    // Duyệt từ bản ghi mới nhất đến cũ nhất
+    for (let i = list.length - 1; i >= 0; i--) {
+        const item = list[i];
         if (!item) continue;
         const code = item.code ? String(item.code).trim().toUpperCase() : '';
         const title = item.title ? String(item.title).trim().toUpperCase() : '';
@@ -28,13 +30,13 @@ function deduplicateActivities(list) {
         // Bỏ qua các sự kiện mẫu cũ mặc định
         if (oldSampleCodes.includes(code)) continue;
 
-        // Khóa định danh sự kiện (ưu tiên theo mã sự kiện, nếu không có mã thì theo tên sự kiện)
+        // Khóa định danh duy nhất (ưu tiên theo mã code, nếu không có mã thì theo tên title)
         const key = code || title;
         if (!key) continue;
 
         if (!seenKeys.has(key)) {
             seenKeys.add(key);
-            unique.push(item);
+            unique.unshift(item);
         }
     }
     return unique;
@@ -70,7 +72,7 @@ function saveActivities(list) {
 
     const payload = JSON.stringify(cleanList);
     
-    // Gửi duy nhất 1 request POST đến Google Apps Script để tránh ghi lặp dữ liệu song song
+    // Gửi duy nhất 1 request POST đến Google Apps Script
     fetch(CONFIG.googleScriptUrl + '?action=saveActivities', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -100,13 +102,6 @@ function syncActivitiesFromCloud(callback) {
             if (Array.isArray(data)) {
                 const cleanData = deduplicateActivities(data);
                 localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
-                
-                // Nếu số lượng trên cloud nhiều hơn bản lọc trùng (bị nhân bản dòng), gửi lại bản sạch 1 lần duy nhất
-                if (cleanData.length < data.length) {
-                    console.log("Phát hiện dữ liệu trùng lặp trên cloud, đang tự động làm sạch Google Sheets...");
-                    saveActivities(cleanData);
-                }
-                
                 if (callback) callback(cleanData);
             }
         })
