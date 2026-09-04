@@ -13,7 +13,7 @@ const CONFIG = {
     activities: []
 };
 
-// Hàm hỗ trợ lọc trùng lặp danh sách sự kiện theo Mã sự kiện (code) hoặc Tên sự kiện (title)
+// Hàm hỗ trợ lọc trùng lặp và chuẩn hóa dữ liệu sự kiện
 function deduplicateActivities(list) {
     if (!Array.isArray(list)) return [];
     const unique = [];
@@ -30,21 +30,47 @@ function deduplicateActivities(list) {
         // Bỏ qua các sự kiện mẫu cũ mặc định nếu người dùng không dùng
         if (code && oldSampleCodes.includes(code)) continue;
 
+        let lat = parseFloat(item.latitude !== undefined ? item.latitude : (item.lat !== undefined ? item.lat : 0));
+        let lng = parseFloat(item.longitude !== undefined ? item.longitude : (item.lng !== undefined ? item.lng : 0));
+        let rawStart = String(item.startTime || item.start || '').trim();
+        let rawEnd = String(item.endTime || item.end || '').trim();
+
+        // Tự động phát hiện và sửa lỗi nếu Google Sheets trả về tọa độ nhầm vào cột startTime / endTime (VD: startTime = 13.122267)
+        const parsedStart = parseFloat(rawStart);
+        const parsedEnd = parseFloat(rawEnd);
+
+        if ((isNaN(lat) || lat === 0) && !isNaN(parsedStart) && parsedStart >= 8 && parsedStart <= 25) {
+            lat = parsedStart;
+            rawStart = '';
+        }
+        if ((isNaN(lng) || lng === 0) && !isNaN(parsedEnd) && parsedEnd >= 100 && parsedEnd <= 115) {
+            lng = parsedEnd;
+            rawEnd = '';
+        }
+
+        // Định dạng chuỗi thời gian hiển thị
+        let displayTime = 'Đang mở điểm danh';
+        if (rawStart && isNaN(parseFloat(rawStart))) {
+            displayTime = rawStart + (rawEnd ? ' - ' + rawEnd : '');
+        } else if (rawStart && !isNaN(parseFloat(rawStart)) && (parsedStart < 8 || parsedStart > 25)) {
+            displayTime = rawStart;
+        }
+
         // Chuẩn hóa thuộc tính để mọi trang (index, checkin, admin) đọc đúng
         const normalizedItem = {
             ...item,
             code: code || title || 'SK-' + (i + 1),
             title: title || code || 'Sự kiện không tên',
             description: item.description || '',
-            locationAddress: item.locationAddress || item.address || item.location || '',
+            locationAddress: item.locationAddress || item.address || item.location || 'Địa điểm tổ chức',
             radius: parseInt(item.radiusMeters || item.radius) || 50,
             radiusMeters: parseInt(item.radiusMeters || item.radius) || 50,
-            start: item.startTime || item.start || '',
-            end: item.endTime || item.end || '',
-            startTime: item.startTime || item.start || '',
-            endTime: item.endTime || item.end || '',
-            latitude: parseFloat(item.latitude || item.lat) || 0,
-            longitude: parseFloat(item.longitude || item.lng) || 0
+            start: displayTime,
+            end: rawEnd,
+            startTime: displayTime,
+            endTime: rawEnd,
+            latitude: !isNaN(lat) ? lat : 13.122267,
+            longitude: !isNaN(lng) ? lng : 109.303212
         };
 
         const key = normalizedItem.code.toUpperCase();

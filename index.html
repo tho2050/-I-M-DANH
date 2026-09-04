@@ -318,8 +318,33 @@
 
     <script src="config.js?v=3.0"></script>
     <script>
-        /* global getActivities */
+        /* global getActivities, deduplicateActivities, syncActivitiesFromCloud */
         let userCoords = null;
+
+        function updateAllDistances() {
+            if (!userCoords) return;
+            document.querySelectorAll('.activity-item').forEach(item => {
+                const lat = parseFloat(item.dataset.lat);
+                const lng = parseFloat(item.dataset.lng);
+                const radius = parseFloat(item.dataset.radius) || 50;
+
+                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                    const dist = haversine(userCoords.lat, userCoords.lng, lat, lng);
+                    const row = item.querySelector('.distance-row');
+                    const val = item.querySelector('.distance-value');
+                    if (row && val) {
+                        row.classList.remove('d-none');
+                        const isNear = dist <= radius;
+                        if (isNear) {
+                            val.innerHTML = `<span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Trong vùng điểm danh (${Math.round(dist)}m)</span>`;
+                        } else {
+                            const distText = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(1) + ' km';
+                            val.innerHTML = `<span class="text-warning fw-bold">${distText}</span>`;
+                        }
+                    }
+                }
+            });
+        }
 
         // Render activities dynamically
         window.addEventListener('DOMContentLoaded', () => {
@@ -328,7 +353,7 @@
             function render(rawList) {
                 const list = typeof deduplicateActivities === 'function' ? deduplicateActivities(rawList) : (rawList || []);
                 if (list.length === 0) {
-                    grid.innerHTML = `<div class="text-center py-5"><h5 class="text-muted">Không có sự kiện nào.</h5></div>`;
+                    grid.innerHTML = `<div class="text-center py-5 col-12"><h5 class="text-muted">Không có sự kiện nào đang mở.</h5></div>`;
                     return;
                 }
 
@@ -338,7 +363,8 @@
                          data-code="${String(item.code || '').toLowerCase()}"
                          data-location="${String(item.locationAddress || '').toLowerCase()}"
                          data-lat="${item.latitude}" 
-                         data-lng="${item.longitude}">
+                         data-lng="${item.longitude}"
+                         data-radius="${item.radiusMeters || item.radius || 50}">
                         <div class="activity-card">
                             <div class="card-header-strip"></div>
                             <div class="card-body-content">
@@ -346,28 +372,28 @@
                                     <span class="code-badge"><i class="fa-solid fa-hashtag"></i> ${item.code}</span>
                                 </div>
                                 <h5 class="card-title">${item.title}</h5>
-                                <p class="card-desc">${item.description || 'Không có mô tả.'}</p>
+                                <p class="card-desc">${item.description || 'Sự kiện điểm danh sinh viên'}</p>
                                 <hr style="border-top:1px solid rgba(99,102,241,0.1); margin: 0.5rem 0;" />
                                 <div class="my-2 flex-grow-1">
                                     <div class="info-row">
-                                        <i class="fa-solid fa-location-dot"></i>
+                                        <i class="fa-solid fa-location-dot text-danger"></i>
                                         <span class="text-truncate" title="${item.locationAddress}">${item.locationAddress}</span>
                                     </div>
                                     <div class="info-row">
-                                        <i class="fa-solid fa-bullseye"></i>
-                                        <span>Bán kính: <strong>${item.radiusMeters} m</strong></span>
+                                        <i class="fa-solid fa-bullseye text-info"></i>
+                                        <span>Bán kính: <strong>${item.radiusMeters || item.radius || 50} m</strong></span>
                                     </div>
                                     <div class="info-row">
-                                        <i class="fa-regular fa-clock"></i>
-                                        <span>Thời gian: ${item.startTime}</span>
+                                        <i class="fa-regular fa-clock text-warning"></i>
+                                        <span>Thời gian: <strong>${item.startTime || 'Đang diễn ra'}</strong></span>
                                     </div>
                                     <div class="info-row distance-row d-none">
                                         <i class="fa-solid fa-route" style="color: #c084fc;"></i>
-                                        <span style="color: #c084fc;">Cách bạn: <strong class="distance-value">--</strong></span>
+                                        <span>Cách bạn: <strong class="distance-value">--</strong></span>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <a href="checkin.html?code=${item.code}" class="btn-checkin-card">
+                                    <a href="checkin.html?code=${encodeURIComponent(item.code)}&title=${encodeURIComponent(item.title)}&lat=${item.latitude}&lng=${item.longitude}&radius=${item.radiusMeters || 50}&loc=${encodeURIComponent(item.locationAddress)}" class="btn-checkin-card">
                                         <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Điểm danh ngay
                                     </a>
                                 </div>
@@ -386,7 +412,10 @@
             const localList = getActivities();
             render(localList);
 
-            // 2. Chạy ngầm lấy dữ liệu từ Google Sheets về đồng bộ và vẽ lại
+            // 2. Tự động yêu cầu vị trí GPS để tính khoảng cách
+            requestUserLocation();
+
+            // 3. Chạy ngầm lấy dữ liệu từ Google Sheets về đồng bộ và vẽ lại
             syncActivitiesFromCloud((cloudList) => {
                 render(cloudList);
             });
@@ -413,22 +442,19 @@
         function requestUserLocation() {
             if (!navigator.geolocation) return;
             const statusEl = document.getElementById('gpsStatusText');
-            statusEl.textContent = 'Đang định vị...';
+            if (statusEl) statusEl.textContent = 'Đang định vị...';
+
             navigator.geolocation.getCurrentPosition(
                 pos => {
                     userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    statusEl.textContent = 'Định vị OK';
-                    document.querySelectorAll('.activity-item').forEach(item => {
-                        const lat = parseFloat(item.dataset.lat);
-                        const lng = parseFloat(item.dataset.lng);
-                        const dist = haversine(userCoords.lat, userCoords.lng, lat, lng);
-                        const row = item.querySelector('.distance-row');
-                        const val = item.querySelector('.distance-value');
-                        row.classList.remove('d-none');
-                        val.textContent = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(1) + ' km';
-                    });
+                    if (statusEl) statusEl.textContent = 'Định vị GPS OK';
+                    updateAllDistances();
                 },
-                err => { statusEl.textContent = 'Lỗi định vị'; }
+                err => {
+                    console.warn("Lỗi GPS:", err);
+                    if (statusEl) statusEl.textContent = 'Bấm bật GPS';
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
             );
         }
     </script>

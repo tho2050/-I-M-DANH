@@ -308,22 +308,27 @@
         const list = getActivities(); // Lấy danh sách hoạt động động từ localStorage/config
         let activity = list.find(a => String(a.code || '').toLowerCase() === String(actCode || '').trim().toLowerCase());
 
-        // Nếu không tìm thấy trong LocalStorage nhưng URL có truyền đủ tọa độ và thông tin
-        if (!activity && actCode && actTitle && actLat && actLng) {
+        // Nếu không tìm thấy trong LocalStorage nhưng có mã hoặc URL có truyền thông tin
+        if (!activity && actCode) {
             activity = {
                 code: actCode,
-                title: actTitle,
+                title: actTitle || actCode,
                 description: "Sự kiện được đồng bộ động qua mã QR.",
-                locationAddress: actLoc || "Địa điểm trên mã QR",
-                latitude: actLat,
-                longitude: actLng,
-                radiusMeters: actRadius
+                locationAddress: actLoc || "Địa điểm tổ chức sự kiện",
+                latitude: actLat || 13.122267,
+                longitude: actLng || 109.303212,
+                radiusMeters: actRadius || 50
             };
-        }
-
-        if (!activity) {
-            alert('Không tìm thấy thông tin hoạt động!');
-            window.location.href = '/index.html';
+        } else if (!activity) {
+            activity = {
+                code: "SK-DEFAULT",
+                title: "Sự Kiện Điểm Danh Chung",
+                description: "Sự kiện điểm danh",
+                locationAddress: "Trường Đại học Xây dựng Miền Trung",
+                latitude: 13.122267,
+                longitude: 109.303212,
+                radiusMeters: 50
+            };
         }
 
         document.getElementById('actCodeHeader').textContent = activity.code;
