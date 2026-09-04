@@ -2066,7 +2066,7 @@
                 const fetchUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'action=getAttendance&_t=' + Date.now();
                 const res = await fetch(fetchUrl);
                 const sheetData = await res.json();
-                let serverRecords = [];
+                let serverRecords = null;
                 if (Array.isArray(sheetData)) {
                     serverRecords = sheetData;
                 } else if (sheetData && Array.isArray(sheetData.data)) {
@@ -2076,7 +2076,15 @@
                 } else if (sheetData && Array.isArray(sheetData.records)) {
                     serverRecords = sheetData.records;
                 }
-                attendanceData = cleanAndDeduplicateRecords([...localRecords, ...serverRecords]);
+
+                if (serverRecords !== null) {
+                    // Ưu tiên 100% dữ liệu thực tế từ Google Sheets (nếu trên máy tính đã xóa thì điện thoại cũng sẽ trống)
+                    attendanceData = cleanAndDeduplicateRecords(serverRecords);
+                    localStorage.setItem("gps_attendance_local_records", JSON.stringify(attendanceData));
+                } else {
+                    attendanceData = cleanAndDeduplicateRecords(localRecords);
+                }
+
                 updateActivityDropdown();
                 filterAttendanceTable();
             } catch (err) {
