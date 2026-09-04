@@ -1954,9 +1954,20 @@
             }
 
             try {
-                const res = await fetch(scriptUrl);
+                const fetchUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'action=getAttendance&_t=' + Date.now();
+                const res = await fetch(fetchUrl);
                 const sheetData = await res.json();
-                attendanceData = cleanAndDeduplicateRecords([...localRecords, ...sheetData]);
+                let serverRecords = [];
+                if (Array.isArray(sheetData)) {
+                    serverRecords = sheetData;
+                } else if (sheetData && Array.isArray(sheetData.data)) {
+                    serverRecords = sheetData.data;
+                } else if (sheetData && Array.isArray(sheetData.attendance)) {
+                    serverRecords = sheetData.attendance;
+                } else if (sheetData && Array.isArray(sheetData.records)) {
+                    serverRecords = sheetData.records;
+                }
+                attendanceData = cleanAndDeduplicateRecords([...localRecords, ...serverRecords]);
                 updateActivityDropdown();
                 filterAttendanceTable();
             } catch (err) {
