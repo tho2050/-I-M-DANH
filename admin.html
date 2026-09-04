@@ -1765,6 +1765,36 @@
             return false;
         }
 
+        // Xác định thứ tự ưu tiên sắp xếp cố định cho 4 Khoa:
+        // 1. Khoa Kỹ thuật Công nghệ (Khoa KT - Công Nghệ)
+        // 2. Khoa Kinh tế (Khoa Kinh Tế)
+        // 3. Khoa Xây dựng (Khoa Xây Dựng)
+        // 4. Khoa Kiến trúc (Khoa Kiến Trúc)
+        function getFacultyOrder(facultyName) {
+            if (!facultyName) return 99;
+            const f = removeVietnameseTones(String(facultyName)).toLowerCase();
+            if (f.includes('ky thuat') || f.includes('cong nghe') || f.includes('cntt') || f.includes('it') || f.includes('dien') || f.includes('co khi')) return 1;
+            if (f.includes('kinh te') || f.includes('quan tri') || f.includes('ke toan') || f.includes('tai chinh')) return 2;
+            if (f.includes('xay dung') || f.includes('cau duong') || f.includes('cong trinh')) return 3;
+            if (f.includes('kien truc') || f.includes('quy hoach') || f.includes('noi that')) return 4;
+            return 99;
+        }
+
+        // Tự động sắp xếp danh sách điểm danh theo thứ tự 4 Khoa, cùng khoa thì sắp theo thời gian/MSSV
+        function sortRecordsByFaculty(records) {
+            if (!Array.isArray(records)) return [];
+            return [...records].sort((a, b) => {
+                const orderA = getFacultyOrder(a.faculty);
+                const orderB = getFacultyOrder(b.faculty);
+                if (orderA !== orderB) {
+                    return orderA - orderB;
+                }
+                const timeA = String(a.timestamp || '');
+                const timeB = String(b.timestamp || '');
+                return timeA.localeCompare(timeB);
+            });
+        }
+
         // LỌC DỮ LIỆU ĐIỂM DANH
         function filterAttendanceTable() {
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
@@ -1792,13 +1822,16 @@
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });
-            renderAttendanceTable(filtered);
+
+            const sorted = sortRecordsByFaculty(filtered);
+            renderAttendanceTable(sorted);
         }
 
         // CHUẨN BỊ DỮ LIỆU BẢNG ĐIỂM DANH CHO SHEETJS (XLSX)
         function createAttendanceSheetData(records) {
+            const sortedRecords = sortRecordsByFaculty(records);
             const header = ["STT", "Thời Gian", "Mã Sự Kiện", "Tên Sự Kiện", "MSSV", "Họ và Tên", "Lớp", "Khoa", "Số Điện Thoại", "Gmail", "Khoảng Cách", "Thiết Bị", "Tọa độ sự kiện", "IP Máy"];
-            const rows = records.map((item, idx) => [
+            const rows = sortedRecords.map((item, idx) => [
                 idx + 1,
                 item.timestamp || '',
                 item.code || '',
