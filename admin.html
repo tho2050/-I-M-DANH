@@ -1529,11 +1529,33 @@
 
             // Cập nhật bộ lọc sự kiện dropdown
             const filterSelect = document.getElementById('attendanceActivityFilter');
+            const currentSelected = filterSelect ? filterSelect.value : '';
             const acts = getActivities();
             filterSelect.innerHTML = '<option value="">-- Tất cả sự kiện --</option>';
+            const addedCodes = new Set();
+
             acts.forEach(a => {
-                filterSelect.innerHTML += `<option value="${a.code}">${a.code} - ${a.title}</option>`;
+                const code = String(a.code || '').trim();
+                if (code && !addedCodes.has(code.toLowerCase())) {
+                    addedCodes.add(code.toLowerCase());
+                    filterSelect.innerHTML += `<option value="${code}">${code} - ${a.title || ''}</option>`;
+                }
             });
+
+            // Thêm các mã có trong dữ liệu điểm danh mà chưa có trong danh sách acts
+            if (Array.isArray(attendanceData)) {
+                attendanceData.forEach(item => {
+                    const c = String(item.code || '').trim();
+                    if (c && !addedCodes.has(c.toLowerCase())) {
+                        addedCodes.add(c.toLowerCase());
+                        const titleDisplay = item.title ? ` - ${item.title}` : '';
+                        filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
+                    }
+                });
+            }
+            if (currentSelected) {
+                filterSelect.value = currentSelected;
+            }
 
             // Lấy dữ liệu điểm danh đã lưu cục bộ
             const localRecords = localStorage.getItem("gps_attendance_local_records")
@@ -1572,6 +1594,20 @@
                 const res = await fetch(scriptUrl);
                 const sheetData = await res.json();
                 attendanceData = deduplicateAttendanceRecords([...localRecords, ...sheetData]);
+                
+                // Cập nhật lại dropdown với các sự kiện mới nhất từ Google Sheets
+                if (Array.isArray(attendanceData)) {
+                    attendanceData.forEach(item => {
+                        const c = String(item.code || '').trim();
+                        if (c && !addedCodes.has(c.toLowerCase())) {
+                            addedCodes.add(c.toLowerCase());
+                            const titleDisplay = item.title ? ` - ${item.title}` : '';
+                            filterSelect.innerHTML += `<option value="${c}">${c}${titleDisplay}</option>`;
+                        }
+                    });
+                }
+                if (currentSelected) filterSelect.value = currentSelected;
+
                 filterAttendanceTable();
             } catch (err) {
                 console.error("Lỗi khi fetch dữ liệu từ Google Apps Script", err);
@@ -1643,11 +1679,64 @@
             return normItem.includes(normSel);
         }
 
+        // Kiểm tra so khớp Sự kiện (xử lý cả mã code, tên sự kiện title, và định dạng ngày tháng của Google Sheet)
+        function matchActivity(item, selectedCode) {
+            if (!selectedCode) return true;
+            if (!item) return false;
+
+            const filterValNorm = removeVietnameseTones(String(selectedCode)).trim();
+            const itemCodeNorm = removeVietnameseTones(String(item.code || '')).trim();
+            const itemTitleNorm = removeVietnameseTones(String(item.title || '')).trim();
+
+            // 1. So khớp trực tiếp mã sự kiện
+            if (itemCodeNorm === filterValNorm) return true;
+            if (itemCodeNorm && (itemCodeNorm.includes(filterValNorm) || filterValNorm.includes(itemCodeNorm))) return true;
+
+            // 2. Tìm sự kiện trong danh sách để so khớp theo tên sự kiện (title)
+            const acts = getActivities();
+            const selectedAct = acts.find(a => removeVietnameseTones(String(a.code)).trim() === filterValNorm);
+            if (selectedAct) {
+                const selectedTitleNorm = removeVietnameseTones(String(selectedAct.title || '')).trim();
+                if (selectedTitleNorm) {
+                    if (itemTitleNorm && (itemTitleNorm === selectedTitleNorm || itemTitleNorm.includes(selectedTitleNorm) || selectedTitleNorm.includes(itemTitleNorm))) {
+                        return true;
+                    }
+                    if (itemCodeNorm && (itemCodeNorm.includes(selectedTitleNorm) || selectedTitleNorm.includes(itemCodeNorm))) {
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Xử lý Google Sheet tự chuyển mã dạng ngày tháng như "5/9" -> "Sat Sep 05 2026..."
+            if (filterValNorm.includes('/') || filterValNorm.includes('-')) {
+                const parts = filterValNorm.split(/[\/\-]/);
+                if (parts.length >= 2) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    if (!isNaN(day) && !isNaN(month)) {
+                        const rawCode = String(item.code || '').toLowerCase();
+                        const monthsEn = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+                        const monthStrEn = monthsEn[month - 1];
+                        if (monthStrEn && rawCode.includes(monthStrEn)) {
+                            if (rawCode.includes(String(day)) || rawCode.includes(day < 10 ? '0' + day : String(day))) {
+                                return true;
+                            }
+                        }
+                        if (rawCode.includes(`${day}/${month}`) || rawCode.includes(`${day}-${month}`) || rawCode.includes(`${month}/${day}`)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         // LỌC DỮ LIỆU ĐIỂM DANH
         function filterAttendanceTable() {
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
             const facultyFilter = document.getElementById('attendanceFacultyFilter') ? document.getElementById('attendanceFacultyFilter').value : '';
-            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
+            const actFilter = document.getElementById('attendanceActivityFilter').value.trim();
 
             const filtered = attendanceData.filter(item => {
                 const nameStr = removeVietnameseTones(item.name || '');
@@ -1656,7 +1745,6 @@
                 const facultyStr = removeVietnameseTones(item.faculty || '');
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
-                const actCodeStr = String(item.code || '').toLowerCase();
 
                 const matchesSearch = !searchQuery || 
                                       nameStr.includes(searchQuery) ||
@@ -1667,7 +1755,7 @@
                                       emailStr.includes(searchQuery);
 
                 const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
-                const matchesActivity = !actFilter || actCodeStr === actFilter;
+                const matchesActivity = matchActivity(item, actFilter);
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });
@@ -1728,7 +1816,7 @@
             }
 
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
-            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
+            const actFilter = document.getElementById('attendanceActivityFilter').value.trim();
 
             const baseData = attendanceData.filter(item => {
                 const nameStr = removeVietnameseTones(item.name || '');
@@ -1737,7 +1825,6 @@
                 const facultyStr = removeVietnameseTones(item.faculty || '');
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
-                const actCodeStr = String(item.code || '').toLowerCase();
 
                 const matchesSearch = !searchQuery || 
                                       nameStr.includes(searchQuery) ||
@@ -1747,8 +1834,9 @@
                                       phoneStr.includes(searchQuery) ||
                                       emailStr.includes(searchQuery);
 
-                const matchesActivity = !actFilter || actCodeStr === actFilter;
-                return matchesSearch && matchesActivity;
+                const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
+                const matchesActivity = matchActivity(item, actFilter);
+                return matchesSearch && matchesFaculty && matchesActivity;
             });
 
             if (baseData.length === 0) {
@@ -1868,7 +1956,7 @@
 
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
             const facultyFilter = document.getElementById('attendanceFacultyFilter') ? document.getElementById('attendanceFacultyFilter').value : '';
-            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
+            const actFilter = document.getElementById('attendanceActivityFilter').value.trim();
 
             const filtered = attendanceData.filter(item => {
                 const nameStr = removeVietnameseTones(item.name || '');
@@ -1877,7 +1965,6 @@
                 const facultyStr = removeVietnameseTones(item.faculty || '');
                 const phoneStr = removeVietnameseTones(item.phoneNumber || '');
                 const emailStr = removeVietnameseTones(item.email || '');
-                const actCodeStr = String(item.code || '').toLowerCase();
 
                 const matchesSearch = !searchQuery || 
                                       nameStr.includes(searchQuery) ||
@@ -1888,7 +1975,7 @@
                                       emailStr.includes(searchQuery);
 
                 const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
-                const matchesActivity = !actFilter || actCodeStr === actFilter;
+                const matchesActivity = matchActivity(item, actFilter);
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });

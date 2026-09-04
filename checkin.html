@@ -438,6 +438,7 @@
             localRecords.unshift({
                 timestamp: new Date().toLocaleString('vi-VN'),
                 code: activity.code,
+                title: activity.title || '',
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
