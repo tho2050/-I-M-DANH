@@ -23,20 +23,34 @@ function deduplicateActivities(list) {
     // Duyệt từ bản ghi mới nhất đến cũ nhất
     for (let i = list.length - 1; i >= 0; i--) {
         const item = list[i];
-        if (!item) continue;
+        if (!item || typeof item !== 'object') continue;
         const code = item.code ? String(item.code).trim().toUpperCase() : '';
-        const title = item.title ? String(item.title).trim().toUpperCase() : '';
+        const title = item.title ? String(item.title).trim() : '';
         
-        // Bỏ qua các sự kiện mẫu cũ mặc định
-        if (oldSampleCodes.includes(code)) continue;
+        // Bỏ qua các sự kiện mẫu cũ mặc định nếu người dùng không dùng
+        if (code && oldSampleCodes.includes(code)) continue;
 
-        // Khóa định danh duy nhất (ưu tiên theo mã code, nếu không có mã thì theo tên title)
-        const key = code || title;
-        if (!key) continue;
+        // Chuẩn hóa thuộc tính để mọi trang (index, checkin, admin) đọc đúng
+        const normalizedItem = {
+            ...item,
+            code: code || title || 'SK-' + (i + 1),
+            title: title || code || 'Sự kiện không tên',
+            description: item.description || '',
+            locationAddress: item.locationAddress || item.address || item.location || '',
+            radius: parseInt(item.radiusMeters || item.radius) || 50,
+            radiusMeters: parseInt(item.radiusMeters || item.radius) || 50,
+            start: item.startTime || item.start || '',
+            end: item.endTime || item.end || '',
+            startTime: item.startTime || item.start || '',
+            endTime: item.endTime || item.end || '',
+            latitude: parseFloat(item.latitude || item.lat) || 0,
+            longitude: parseFloat(item.longitude || item.lng) || 0
+        };
 
+        const key = normalizedItem.code.toUpperCase();
         if (!seenKeys.has(key)) {
             seenKeys.add(key);
-            unique.unshift(item);
+            unique.unshift(normalizedItem);
         }
     }
     return unique;
@@ -56,8 +70,7 @@ function getActivities() {
                 return cleanData;
             }
         } catch (e) {
-            console.error("Lỗi parse dữ liệu activities từ localStorage, tiến hành reset", e);
-            localStorage.removeItem("gps_attendance_activities");
+            console.error("Lỗi parse dữ liệu activities từ localStorage", e);
         }
     }
     return deduplicateActivities(CONFIG.activities || []);
@@ -70,9 +83,10 @@ function saveActivities(list) {
     
     if (!CONFIG.googleScriptUrl) return;
 
-    const payload = JSON.stringify(cleanList);
+    // Gửi payload dạng object chứa mảng activities và list để tương thích mọi phiên bản Google Script
+    const payload = JSON.stringify({ activities: cleanList, list: cleanList });
     
-    // Gửi duy nhất 1 request POST đến Google Apps Script
+    // Gửi request POST đến Google Apps Script
     fetch(CONFIG.googleScriptUrl + '?action=saveActivities', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -90,7 +104,7 @@ function saveActivities(list) {
 
 let isSyncingActivities = false;
 
-// Đồng bộ danh sách hoạt động từ Google Sheets về LocalStorage (chạy ngầm, chống cache di động)
+// Đồng bộ danh sách hoạt động từ Google Sheets về LocalStorage (chạy ngầm, chống ghi đè rỗng)
 function syncActivitiesFromCloud(callback) {
     if (!CONFIG.googleScriptUrl || isSyncingActivities) return;
     isSyncingActivities = true;
@@ -99,14 +113,37 @@ function syncActivitiesFromCloud(callback) {
         .then(res => res.json())
         .then(data => {
             isSyncingActivities = false;
+            let list = null;
             if (Array.isArray(data)) {
-                const cleanData = deduplicateActivities(data);
-                localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
-                if (callback) callback(cleanData);
+                list = data;
+            } else if (data && Array.isArray(data.activities)) {
+                list = data.activities;
+            } else if (data && Array.isArray(data.data)) {
+                list = data.data;
+            }
+
+            // CHỈ cập nhật localStorage nếu dữ liệu từ Cloud có sự kiện (> 0)
+            if (list && list.length > 0) {
+                const cleanData = deduplicateActivities(list);
+                if (cleanData.length > 0) {
+                    localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
+                    if (callback) callback(cleanData);
+                    return;
+                }
+            }
+
+            // Nếu Cloud rỗng nhưng máy cục bộ đang có sự kiện: tự động đẩy lên Cloud
+            const localData = getActivities();
+            if (localData && localData.length > 0) {
+                saveActivities(localData);
+                if (callback) callback(localData);
+            } else if (callback) {
+                callback([]);
             }
         })
         .catch(err => {
             isSyncingActivities = false;
             console.error("Lỗi đồng bộ danh sách sự kiện từ cloud:", err);
+            if (callback) callback(getActivities());
         });
 }

@@ -1052,25 +1052,28 @@
         function renderActivities() {
             const list = typeof deduplicateActivities === 'function' ? deduplicateActivities(getActivities()) : getActivities();
             const container = document.getElementById('activitiesListContainer');
-            if (list.length === 0) {
+            if (!list || list.length === 0) {
                 container.innerHTML = `<div class="text-center py-4 text-muted">Không có sự kiện nào. Hãy nhấn "Thêm sự kiện mới".</div>`;
                 return;
             }
 
-            container.innerHTML = list.map((item, idx) => `
+            container.innerHTML = list.map((item, idx) => {
+                const radius = item.radiusMeters || item.radius || 50;
+                const location = item.locationAddress || item.address || item.location || 'Chưa cập nhật địa điểm';
+                return `
                 <div class="activity-item-row d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                         <span class="badge bg-primary font-monospace">${item.code}</span>
                         <strong class="d-block mt-1">${item.title}</strong>
-                        <span class="small text-muted d-block"><i class="fa-solid fa-location-dot"></i> ${item.locationAddress} (Bán kính: ${item.radiusMeters}m)</span>
+                        <span class="small text-muted d-block"><i class="fa-solid fa-location-dot"></i> ${location} (Bán kính: ${radius}m)</span>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary" onclick="printQr('${item.code}', '${item.title}', ${item.radiusMeters})"><i class="fa-solid fa-print me-1"></i>In QR Điểm Danh</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="printQr('${item.code}', '${item.title}', ${radius})"><i class="fa-solid fa-print me-1"></i>In QR Điểm Danh</button>
                         <button class="btn btn-sm btn-outline-info" onclick="editActivity(${idx})"><i class="fa-solid fa-pencil"></i> Sửa</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteActivity(${idx})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `;}).join('');
         }
 
         // Helpers convert datetime-local <-> hh:mm DD/MM/YYYY
@@ -1102,21 +1105,49 @@
             e.preventDefault();
             const list = getActivities();
             
+            let lat = parseFloat(document.getElementById('newLat').value);
+            let lng = parseFloat(document.getElementById('newLng').value);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                const coordsVal = document.getElementById('newCoords').value;
+                const matches = coordsVal.match(/[-+]?[0-9]*\.?[0-9]+/g);
+                if (matches && matches.length >= 2) {
+                    lat = parseFloat(matches[0]);
+                    lng = parseFloat(matches[1]);
+                }
+            }
+
+            if (isNaN(lat) || isNaN(lng)) {
+                lat = 10.7725;
+                lng = 106.6581;
+            }
+
+            const code = document.getElementById('newCode').value.trim().toUpperCase();
+            const title = document.getElementById('newTitle').value.trim();
+            const description = document.getElementById('newDescription').value.trim();
+            const locationAddress = document.getElementById('newLocation').value.trim();
+            const radius = parseInt(document.getElementById('newRadius').value) || 50;
+            const startFriendly = formatDateTimeLocalToFriendly(document.getElementById('newStart').value);
+            const endFriendly = formatDateTimeLocalToFriendly(document.getElementById('newEnd').value);
+
             const newAct = {
-                code: document.getElementById('newCode').value.trim().toUpperCase(),
-                title: document.getElementById('newTitle').value.trim(),
-                description: document.getElementById('newDescription').value.trim(),
-                locationAddress: document.getElementById('newLocation').value.trim(),
-                radiusMeters: parseInt(document.getElementById('newRadius').value) || 50,
-                startTime: formatDateTimeLocalToFriendly(document.getElementById('newStart').value),
-                endTime: formatDateTimeLocalToFriendly(document.getElementById('newEnd').value),
-                latitude: parseFloat(document.getElementById('newLat').value),
-                longitude: parseFloat(document.getElementById('newLng').value)
+                code: code,
+                title: title,
+                description: description,
+                locationAddress: locationAddress,
+                radius: radius,
+                radiusMeters: radius,
+                start: startFriendly,
+                end: endFriendly,
+                startTime: startFriendly,
+                endTime: endFriendly,
+                latitude: lat,
+                longitude: lng
             };
 
             if (editingIndex === -1) {
                 // Check duplicate code
-                if (list.some(a => a.code === newAct.code)) {
+                if (list.some(a => (a.code || '').toUpperCase() === newAct.code)) {
                     alert('Mã sự kiện này đã tồn tại!');
                     return;
                 }
@@ -1136,7 +1167,10 @@
 
             // Reset form and switch back
             e.target.reset();
-            if (selectMarker) selectMap.removeLayer(selectMarker);
+            document.getElementById('newLat').value = '';
+            document.getElementById('newLng').value = '';
+            document.getElementById('newCoords').value = '';
+            if (selectMarker && selectMap) selectMap.removeLayer(selectMarker);
             
             switchTab('manage-activities');
             renderActivities();
@@ -1166,25 +1200,25 @@
             document.getElementById('btnSubmitEvent').innerHTML = '<i class="fa-solid fa-save me-2"></i>Lưu Thay Đổi';
             
             // Khóa trường Mã sự kiện không cho sửa
-            document.getElementById('newCode').value = act.code;
+            document.getElementById('newCode').value = act.code || '';
             document.getElementById('newCode').disabled = true;
 
             // Điền thông tin cũ vào form
             document.getElementById('newTitle').value = act.title || '';
             document.getElementById('newDescription').value = act.description || '';
-            document.getElementById('newLocation').value = act.locationAddress || '';
-            document.getElementById('newRadius').value = act.radiusMeters || 50;
-            document.getElementById('newStart').value = parseFriendlyToDateTimeLocal(act.startTime);
-            document.getElementById('newEnd').value = parseFriendlyToDateTimeLocal(act.endTime);
+            document.getElementById('newLocation').value = act.locationAddress || act.address || act.location || '';
+            document.getElementById('newRadius').value = act.radiusMeters || act.radius || 50;
+            document.getElementById('newStart').value = parseFriendlyToDateTimeLocal(act.startTime || act.start);
+            document.getElementById('newEnd').value = parseFriendlyToDateTimeLocal(act.endTime || act.end);
             
             const lat = parseFloat(act.latitude) || 0;
             const lng = parseFloat(act.longitude) || 0;
-            document.getElementById('newLat').value = lat.toFixed(6);
-            document.getElementById('newLng').value = lng.toFixed(6);
-            document.getElementById('newCoords').value = lat.toFixed(6) + ", " + lng.toFixed(6);
+            document.getElementById('newLat').value = lat ? lat.toFixed(6) : '';
+            document.getElementById('newLng').value = lng ? lng.toFixed(6) : '';
+            document.getElementById('newCoords').value = (lat && lng) ? (lat.toFixed(6) + ", " + lng.toFixed(6)) : '';
 
             // Cập nhật vị trí bản đồ
-            if (selectMap) {
+            if (selectMap && lat && lng) {
                 selectMap.setView([lat, lng], 16);
                 if (selectMarker) selectMarker.setLatLng([lat, lng]);
                 else selectMarker = L.marker([lat, lng]).addTo(selectMap);
