@@ -1366,7 +1366,7 @@
                     <div class="d-flex gap-2">
                         <button class="btn btn-sm btn-outline-primary" onclick="printQr('${item.code}', '${item.title}', ${radius})"><i class="fa-solid fa-print me-1"></i>In QR Điểm Danh</button>
                         <button class="btn btn-sm btn-outline-info" onclick="editActivity(${idx})"><i class="fa-solid fa-pencil"></i> Sửa</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteActivity(${idx})"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteActivity('${encodeURIComponent(item.code)}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -1478,23 +1478,36 @@
             renderActivities();
         }
 
-        function deleteActivity(idx) {
-            const list = getActivities();
-            const target = list[idx];
-            if (!target) return;
+        function deleteActivity(targetParam) {
+            let list = getActivities();
+            let target = null;
+            let targetCode = '';
 
-            if (confirm(`Bạn có chắc chắn muốn XÓA sự kiện "${target.title}" (Mã: ${target.code})?`)) {
-                const targetCode = String(target.code || '').toUpperCase().trim();
-                
+            if (typeof targetParam === 'number') {
+                target = list[targetParam];
+                if (target) targetCode = String(target.code || '').trim();
+            } else {
+                targetCode = decodeURIComponent(String(targetParam || '')).trim();
+                target = list.find(a => String(a.code).trim().toLowerCase() === targetCode.toLowerCase() || String(a.title).trim().toLowerCase() === targetCode.toLowerCase());
+            }
+
+            if (!target && !targetCode) return;
+
+            const displayTitle = target ? target.title : targetCode;
+            if (confirm(`Bạn có chắc chắn muốn XÓA sự kiện "${displayTitle}" (Mã: ${targetCode})?`)) {
                 // 1. Lưu vào danh sách sự kiện đã xóa vĩnh viễn
                 let deletedCodes = JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]");
-                if (targetCode && !deletedCodes.includes(targetCode)) {
-                    deletedCodes.push(targetCode);
-                    localStorage.setItem("deleted_activity_codes", JSON.stringify(deletedCodes));
+                if (targetCode && !deletedCodes.map(c => c.toLowerCase()).includes(targetCode.toLowerCase())) {
+                    deletedCodes.push(targetCode.toLowerCase());
                 }
+                if (target && target.title && !deletedCodes.map(c => c.toLowerCase()).includes(target.title.toLowerCase())) {
+                    deletedCodes.push(target.title.toLowerCase());
+                }
+                localStorage.setItem("deleted_activity_codes", JSON.stringify(deletedCodes));
 
                 // 2. Xóa khỏi danh sách hiện tại
-                list.splice(idx, 1);
+                list = list.filter(a => String(a.code).trim().toLowerCase() !== targetCode.toLowerCase() && String(a.title).trim().toLowerCase() !== targetCode.toLowerCase());
+                localStorage.setItem("gps_attendance_activities", JSON.stringify(list));
                 saveActivities(list);
                 renderActivities();
 

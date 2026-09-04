@@ -19,17 +19,18 @@ function deduplicateActivities(list) {
     const unique = [];
     const seenKeys = new Set();
     const oldSampleCodes = ["SVTN2026", "WORKSHOP-AI", "TINHOC-ABC"];
-    const deletedCodes = (JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]")).map(c => String(c).toUpperCase().trim());
+    const deletedCodes = (JSON.parse(localStorage.getItem("deleted_activity_codes") || "[]")).map(c => String(c).toLowerCase().trim());
 
     // Duyệt từ bản ghi mới nhất đến cũ nhất
     for (let i = list.length - 1; i >= 0; i--) {
         const item = list[i];
         if (!item || typeof item !== 'object') continue;
-        const code = item.code ? String(item.code).trim().toUpperCase() : '';
+        const code = item.code ? String(item.code).trim() : '';
         const title = item.title ? String(item.title).trim() : '';
         
         // Bỏ qua các sự kiện đã bị người dùng xóa hoặc mã mẫu cũ
-        if (code && (oldSampleCodes.includes(code) || deletedCodes.includes(code))) continue;
+        if (code && (oldSampleCodes.includes(code.toUpperCase()) || deletedCodes.includes(code.toLowerCase()))) continue;
+        if (title && deletedCodes.includes(title.toLowerCase())) continue;
 
         let lat = parseFloat(item.latitude !== undefined ? item.latitude : (item.lat !== undefined ? item.lat : 0));
         let lng = parseFloat(item.longitude !== undefined ? item.longitude : (item.lng !== undefined ? item.lng : 0));
@@ -91,9 +92,7 @@ function getActivities() {
             const parsed = JSON.parse(local);
             if (Array.isArray(parsed)) {
                 const cleanData = deduplicateActivities(parsed);
-                if (cleanData.length !== parsed.length) {
-                    localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
-                }
+                localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
                 return cleanData;
             }
         } catch (e) {
@@ -149,24 +148,14 @@ function syncActivitiesFromCloud(callback) {
                 list = data.data;
             }
 
-            // CHỈ cập nhật localStorage nếu dữ liệu từ Cloud có sự kiện (> 0)
-            if (list && list.length > 0) {
+            if (list) {
                 const cleanData = deduplicateActivities(list);
-                if (cleanData.length > 0) {
-                    localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
-                    if (callback) callback(cleanData);
-                    return;
-                }
+                localStorage.setItem("gps_attendance_activities", JSON.stringify(cleanData));
+                if (callback) callback(cleanData);
+                return;
             }
 
-            // Nếu Cloud rỗng nhưng máy cục bộ đang có sự kiện: tự động đẩy lên Cloud
-            const localData = getActivities();
-            if (localData && localData.length > 0) {
-                saveActivities(localData);
-                if (callback) callback(localData);
-            } else if (callback) {
-                callback([]);
-            }
+            if (callback) callback(getActivities());
         })
         .catch(err => {
             isSyncingActivities = false;
