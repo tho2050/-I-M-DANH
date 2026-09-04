@@ -251,7 +251,7 @@
                                     <span class="visually-hidden">Tùy chọn xuất</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                                    <li><a class="dropdown-item fw-bold text-success" href="#" onclick="exportMultiSheetExcel(event)"><i class="fa-solid fa-table-cells me-2"></i>Xuất 1 File Excel (Gồm 4 Sheet 4 Khoa + Tổng hợp)</a></li>
+                                    <li><a class="dropdown-item fw-bold text-success" href="#" onclick="exportMultiSheetExcel(event)"><i class="fa-solid fa-table-cells me-2"></i>Xuất 1 File Excel (Gồm 4 Sheet Cho 4 Khoa)</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="exportFourSeparateFiles(event)"><i class="fa-solid fa-copy me-2"></i>Xuất 4 File Riêng Biệt Cho Từng Khoa</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="#" onclick="exportToExcel(event)"><i class="fa-solid fa-filter me-2"></i>Xuất Theo Bộ Lọc Đang Chọn</a></li>
@@ -268,7 +268,6 @@
                         </div>
                         <div class="col-md-4">
                             <select id="attendanceFacultyFilter" class="form-select form-select-sm" onchange="filterAttendanceTable()">
-                                <option value="">-- Tất cả các khoa --</option>
                                 <option value="Khoa Kỹ thuật Công nghệ">Khoa Kỹ thuật Công nghệ</option>
                                 <option value="Khoa Kinh tế">Khoa Kinh tế</option>
                                 <option value="Khoa Xây dựng">Khoa Xây dựng</option>
@@ -1881,26 +1880,22 @@
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
 
-                // 1. Sheet Tổng Hợp (Tất cả 4 khoa)
-                const wsAll = createAttendanceSheetData(baseData);
-                XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả 4 Khoa");
-
-                // 2. Sheet Khoa Kỹ Thuật Công Nghệ
+                // 1. Sheet Khoa Kỹ Thuật Công Nghệ
                 const dataKTCN = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kỹ thuật Công nghệ'));
                 const wsKTCN = createAttendanceSheetData(dataKTCN);
                 XLSX.utils.book_append_sheet(wb, wsKTCN, "Khoa KT - Công Nghệ");
 
-                // 3. Sheet Khoa Kinh Tế
+                // 2. Sheet Khoa Kinh Tế
                 const dataKT = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kinh tế'));
                 const wsKT = createAttendanceSheetData(dataKT);
                 XLSX.utils.book_append_sheet(wb, wsKT, "Khoa Kinh Tế");
 
-                // 4. Sheet Khoa Xây Dựng
+                // 3. Sheet Khoa Xây Dựng
                 const dataXD = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Xây dựng'));
                 const wsXD = createAttendanceSheetData(dataXD);
                 XLSX.utils.book_append_sheet(wb, wsXD, "Khoa Xây Dựng");
 
-                // 5. Sheet Khoa Kiến Trúc
+                // 4. Sheet Khoa Kiến Trúc
                 const dataKTruc = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kiến trúc'));
                 const wsKTruc = createAttendanceSheetData(dataKTruc);
                 XLSX.utils.book_append_sheet(wb, wsKTruc, "Khoa Kiến Trúc");
