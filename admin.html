@@ -2071,27 +2071,31 @@
 
             // Đồng bộ gửi lên Google Apps Script
             if (CONFIG.googleScriptUrl) {
+                const payload = {
+                    code: eventCode,
+                    title: eventTitle,
+                    studentCode: studentCode,
+                    name: name,
+                    className: className,
+                    faculty: faculty,
+                    phoneNumber: phone,
+                    email: email,
+                    distance: "0.0m (Thủ công)",
+                    device: "Super Admin (hongnhung@muce.edu.vn)",
+                    coords: coords,
+                    ip: "Admin Panel (Thủ công)",
+                    deviceUuid: "manual_admin"
+                };
+
                 fetch(CONFIG.googleScriptUrl, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'manualAttendance',
-                        timestamp: timestamp,
-                        code: eventCode,
-                        title: eventTitle,
-                        studentCode: studentCode,
-                        name: name,
-                        className: className,
-                        faculty: faculty,
-                        phoneNumber: phone,
-                        email: email,
-                        distance: "0.0m (Thủ công)",
-                        device: "Super Admin (hongnhung@muce.edu.vn)",
-                        coords: coords,
-                        ip: "Admin Panel"
-                    })
-                }).catch(err => console.warn("Lỗi đồng bộ ngầm Google Sheets:", err));
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                }).catch(err => {
+                    console.warn("Lỗi đồng bộ ngầm Google Sheets qua POST, gửi GET fallback:", err);
+                    fetch(CONFIG.googleScriptUrl + '?data=' + encodeURIComponent(JSON.stringify(payload)))
+                        .catch(e => console.error("GET fallback error:", e));
+                });
             }
 
             // Đóng Modal và vẽ lại bảng

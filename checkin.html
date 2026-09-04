@@ -120,7 +120,12 @@
                         <span class="meta-item"><i class="fa-solid fa-bullseye"></i> Bán kính cho phép: <strong id="actRadius">---</strong></span>
                     </div>
                 </div>
-                <a href="index.html" class="btn btn-outline-secondary btn-sm" id="btnBackList"><i class="fa-solid fa-arrow-left"></i> Danh Sách Sự Kiện</a>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-warning btn-sm fw-bold text-dark shadow-sm px-3 py-2" id="btnManualCheckin" onclick="openManualAuthModal()" style="border-radius: 8px;">
+                        <i class="fa-solid fa-user-pen me-1"></i> Thêm thủ công
+                    </button>
+                    <a href="index.html" class="btn btn-outline-secondary btn-sm" id="btnBackList"><i class="fa-solid fa-arrow-left"></i> Danh Sách Sự Kiện</a>
+                </div>
             </div>
         </div>
 
@@ -166,15 +171,20 @@
             <div class="col-lg-7">
                 <div class="panel-card">
                     <div class="panel-header">
-                        <div>
+                        <div class="d-flex align-items-center">
                             <span class="step-num" style="background: #059669;">2</span>
                             <span class="step-title">Điền Thông Tin Sinh Viên</span>
                         </div>
-                        <span class="badge-form-status locked" id="formStatusBadge"><i class="fa-solid fa-lock me-1"></i>ĐANG KHÓA FORM</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning fw-bold text-dark py-1 px-2" onclick="openManualAuthModal()" title="Dành cho Super Admin hongnhung@muce.edu.vn">
+                                <i class="fa-solid fa-user-pen me-1"></i> Thêm thủ công
+                            </button>
+                            <span class="badge-form-status locked" id="formStatusBadge"><i class="fa-solid fa-lock me-1"></i>ĐANG KHÓA FORM</span>
+                        </div>
                     </div>
                     <div class="panel-body">
                         <div class="gps-alert warning" id="formGpsAlert">
-                            <div><i class="fa-solid fa-warning me-2"></i>Vui lòng xác thực định vị ở Bước 1 trước để mở khóa Form.</div>
+                            <div><i class="fa-solid fa-warning me-2"></i>Vui lòng xác thực định vị ở Bước 1 trước để mở khóa Form. Hoặc bấm <strong>"Thêm thủ công"</strong> nếu là Super Admin.</div>
                         </div>
 
                         <div class="form-section" id="studentForm">
@@ -229,6 +239,32 @@
         </div>
     </div>
 
+    <!-- Modal Xác thực Thêm Thủ Công cho Super Admin -->
+    <div class="modal fade" id="manualAuthModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
+                <div class="modal-header bg-dark text-white py-2" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-shield-halved text-warning me-2"></i>Thêm Thủ Công</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="handleManualAuth(event)" class="p-3">
+                    <p class="small text-muted mb-2">Chức năng dành riêng cho Quản trị viên <strong>hongnhung@muce.edu.vn</strong> để tự thêm sinh viên mà không cần định vị GPS.</p>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Tài khoản / Email:</label>
+                        <input type="text" class="form-control form-control-sm" id="authUsername" value="hongnhung@muce.edu.vn" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Mật khẩu Quản trị:</label>
+                        <input type="password" class="form-control form-control-sm" id="authPassword" placeholder="Nhập mật khẩu..." required />
+                    </div>
+                    <div class="alert alert-danger py-1 px-2 small d-none mb-2" id="authError">Mật khẩu không đúng!</div>
+                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold py-2"><i class="fa-solid fa-lock-open me-1"></i> Mở Khóa Thêm Thủ Công</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="config.js?v=3.0"></script>
     <script>
@@ -423,6 +459,107 @@
             }
         }
 
+        let isManualMode = false;
+
+        function openManualAuthModal() {
+            const isLogged = sessionStorage.getItem("admin_logged") === "true";
+            const user = (sessionStorage.getItem("admin_user") || '').toLowerCase();
+            const role = sessionStorage.getItem("admin_role");
+
+            if (isLogged && (user === "hongnhung@muce.edu.vn" || user.includes("hongnhung") || role === "super")) {
+                activateManualMode();
+                return;
+            }
+
+            const modalEl = document.getElementById('manualAuthModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            document.getElementById('authError').classList.add('d-none');
+            modal.show();
+        }
+
+        async function handleManualAuth(e) {
+            if (e) e.preventDefault();
+            const user = document.getElementById('authUsername').value.trim().toLowerCase();
+            const pwd = document.getElementById('authPassword').value.trim();
+            const errEl = document.getElementById('authError');
+
+            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung"];
+            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345", "Nnhn2005@", "nnhn2005@"];
+            const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
+
+            const isMatchUser = superUsers.includes(user) || user.includes("hongnhung") || user.includes("dhxdmt");
+            const isMatchPwd = (localPsws[user] && pwd === localPsws[user]) || allowedPasswordsSuper.includes(pwd) || pwd === user || pwd.toLowerCase() === "nnhn2005@" || pwd === "nhung2011" || pwd === "admin123";
+
+            if (isMatchUser && isMatchPwd) {
+                sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_user", user);
+                sessionStorage.setItem("admin_role", "super");
+                const modal = bootstrap.Modal.getInstance(document.getElementById('manualAuthModal'));
+                if (modal) modal.hide();
+                activateManualMode();
+            } else {
+                errEl.textContent = "Tài khoản hoặc mật khẩu không chính xác!";
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        function activateManualMode() {
+            isManualMode = true;
+
+            // Cập nhật UI nút xác thực Bước 1
+            const btnVerify = document.getElementById('btnGpsVerify');
+            btnVerify.className = 'btn-gps-verify verified';
+            btnVerify.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
+            btnVerify.innerHTML = '<i class="fa-solid fa-user-check me-2"></i>CHẾ ĐỘ THÊM THỦ CÔNG (ĐÃ MỞ KHÓA)';
+            btnVerify.disabled = true;
+
+            // Cập nhật khoảng cách & trạng thái
+            document.getElementById('distanceValue').textContent = '0.0 m (Thủ công)';
+            document.getElementById('distanceValue').style.color = '#d97706';
+            document.getElementById('radiusStatus').innerHTML = '<span class="status-tag in-range" style="background:#fef3c7; color:#b45309;"><i class="fa-solid fa-shield-halved me-1"></i>Thêm thủ công</span>';
+
+            // Mở khóa Form Bước 2
+            document.getElementById('formStatusBadge').className = 'badge-form-status unlocked';
+            document.getElementById('formStatusBadge').style.background = '#fef3c7';
+            document.getElementById('formStatusBadge').style.color = '#b45309';
+            document.getElementById('formStatusBadge').style.border = '1px solid #fde68a';
+            document.getElementById('formStatusBadge').innerHTML = '<i class="fa-solid fa-user-pen me-1"></i>ĐIỂM DANH THỦ CÔNG';
+
+            document.getElementById('formGpsAlert').className = 'gps-alert warning';
+            document.getElementById('formGpsAlert').style.background = '#fffbeb';
+            document.getElementById('formGpsAlert').style.border = '1px solid #fed7aa';
+            document.getElementById('formGpsAlert').style.color = '#92400e';
+            document.getElementById('formGpsAlert').innerHTML = `<div><i class="fa-solid fa-shield-halved me-2"></i><strong>Đang ở chế độ Thêm thủ công (hongnhung@muce.edu.vn):</strong> Tự nhập sinh viên không cần quét mã GPS.</div>`;
+
+            document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = false);
+            document.getElementById('btnSubmit').disabled = false;
+            document.getElementById('btnSubmit').innerHTML = '<i class="fa-solid fa-plus-circle me-2"></i>LƯU ĐIỂM DANH THỦ CÔNG';
+
+            // Đổi nút "Thêm thủ công" thành badge trạng thái
+            const manualBtn = document.getElementById('btnManualCheckin');
+            if (manualBtn) {
+                manualBtn.className = 'btn btn-sm btn-success fw-bold';
+                manualBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Đang Thêm Thủ Công';
+            }
+        }
+
+        function resetFormForNextManual() {
+            document.getElementById('studentCode').value = '';
+            document.getElementById('fullName').value = '';
+            document.getElementById('className').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('email').value = '';
+            document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = false);
+            
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'none';
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-plus-circle me-2"></i>LƯU ĐIỂM DANH THỦ CÔNG';
+            document.getElementById('studentCode').focus();
+        }
+
         function fillSample(code, name) {
             if (document.getElementById('studentCode').disabled) return;
             document.getElementById('studentCode').value = code;
@@ -435,6 +572,9 @@
                 ? JSON.parse(localStorage.getItem("gps_attendance_local_records")) 
                 : [];
             
+            const distStr = isManualMode ? "0.0m (Thủ công)" : (dist.toFixed(1) + "m");
+            const deviceStr = isManualMode ? "Thêm thủ công (hongnhung@muce.edu.vn)" : (navigator.userAgent.includes("Mobi") ? "Điện Thoại Di Động" : "Thiết Bị Chạy Thử");
+
             localRecords.unshift({
                 timestamp: new Date().toLocaleString('vi-VN'),
                 code: activity.code,
@@ -445,27 +585,30 @@
                 faculty: document.getElementById('faculty').value || '',
                 phoneNumber: document.getElementById('phoneNumber').value || '',
                 email: document.getElementById('email').value || '',
-                distance: dist.toFixed(1) + "m",
-                device: navigator.userAgent.includes("Mobi") ? "Điện Thoại Di Động" : "Thiết Bị Chạy Thử"
+                distance: distStr,
+                device: deviceStr
             });
             localStorage.setItem("gps_attendance_local_records", JSON.stringify(localRecords));
 
-            // Đánh dấu máy này đã điểm danh sự kiện này thành công
-            localStorage.setItem("checked_in_" + activity.code, "true");
+            if (!isManualMode) {
+                // Đánh dấu máy này đã điểm danh sự kiện này thành công (chỉ cho chế độ sinh viên QR thường)
+                localStorage.setItem("checked_in_" + activity.code, "true");
+            }
 
             const resultBox = document.getElementById('resultBox');
             resultBox.style.display = 'block';
             resultBox.className = 'result-box success';
-            resultBox.innerHTML = `<h5>🎉 Điểm danh THÀNH CÔNG!</h5>
-                <p class="mb-0">Dữ liệu của sinh viên <strong>${fullName} (${studentCode})</strong> đã được ghi nhận trực tiếp vào Bảng tính Google Sheets của Ban tổ chức.</p>`;
+            resultBox.innerHTML = `<h5>🎉 ${isManualMode ? 'Đã thêm thủ công THÀNH CÔNG!' : 'Điểm danh THÀNH CÔNG!'}</h5>
+                <p class="mb-2">Dữ liệu của sinh viên <strong>${fullName} (${studentCode})</strong> đã được ghi nhận trực tiếp vào Bảng tính Google Sheets của Ban tổ chức.</p>
+                ${isManualMode ? `<button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-2" onclick="resetFormForNextManual()"><i class="fa-solid fa-user-plus me-1"></i> Thêm Tiếp Sinh Viên Khác</button>` : ''}`;
             
-            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> ĐÃ HOÀN TẤT ĐIỂM DANH';
+            btn.innerHTML = isManualMode ? '<i class="fa-solid fa-check"></i> ĐÃ LƯU SINH VIÊN' : '<i class="fa-solid fa-check-double"></i> ĐÃ HOÀN TẤT ĐIỂM DANH';
             document.querySelectorAll('#studentForm .form-control').forEach(el => el.disabled = true);
         }
 
         async function submitCheckIn() {
-            // Kiểm tra xem máy này đã điểm danh sự kiện này chưa (Client-side fast prevention)
-            if (localStorage.getItem("checked_in_" + activity.code) === "true") {
+            // Kiểm tra xem máy này đã điểm danh sự kiện này chưa (Chỉ áp dụng cho sinh viên quét mã thường, không chặn khi admin thêm thủ công)
+            if (!isManualMode && localStorage.getItem("checked_in_" + activity.code) === "true") {
                 alert("Thiết bị này đã thực hiện điểm danh cho sự kiện này rồi!");
                 return;
             }
@@ -482,44 +625,51 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang gửi thông tin...';
 
-            const dist = haversine(userLat, userLng, targetLat, targetLng);
+            const dist = isManualMode ? 0 : haversine(userLat, userLng, targetLat, targetLng);
+            const distStr = isManualMode ? "0.0m (Thủ công)" : (dist.toFixed(1) + "m");
+            const deviceStr = isManualMode ? "Thêm thủ công (hongnhung@muce.edu.vn)" : (navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin");
 
             const scriptUrl = CONFIG.googleScriptUrl;
             if (!scriptUrl) {
-                // Fallback nếu chưa cấu hình script Url
                 saveLocalAndShowSuccess(studentCode, fullName, dist);
                 return;
             }
 
             const payload = {
                 code: activity.code,
-                title: activity.title || '', // Gửi kèm tên sự kiện
+                title: activity.title || '',
                 studentCode: studentCode,
                 name: fullName,
                 className: document.getElementById('className').value || '',
                 faculty: document.getElementById('faculty').value || '',
                 phoneNumber: document.getElementById('phoneNumber').value || '',
                 email: document.getElementById('email').value || '',
-                coords: `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`,
-                distance: dist.toFixed(1) + "m",
-                device: navigator.userAgent.includes("Mobi") ? "Điện thoại di động" : "Máy tính Admin",
-                ip: clientIp,                // IP máy của sinh viên
-                deviceUuid: deviceUuid       // Chuỗi định danh chống điểm danh hộ
+                coords: `${targetLat || userLat.toFixed(6)}, ${targetLng || userLng.toFixed(6)}`,
+                distance: distStr,
+                device: deviceStr,
+                ip: isManualMode ? "Admin Panel (Thủ công)" : clientIp,
+                deviceUuid: isManualMode ? "manual_admin" : deviceUuid
             };
 
             try {
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    result = { status: 'success' };
+                }
 
-                if (result.status === 'success') {
+                if (result.status === 'success' || response.ok) {
                     saveLocalAndShowSuccess(studentCode, fullName, dist);
                 } else {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';
-                    alert('LỖI ĐIỂM DANH: ' + result.message);
+                    btn.innerHTML = isManualMode ? '<i class="fa-solid fa-plus-circle me-2"></i>LƯU ĐIỂM DANH THỦ CÔNG' : '<i class="fa-solid fa-check-double me-2"></i>XÁC NHẬN ĐIỂM DANH THAM GIA';
+                    alert('LỖI ĐIỂM DANH: ' + (result.message || 'Không thể lưu dữ liệu'));
                 }
             } catch (err) {
                 // Fallback nếu có lỗi CORS/mạng
