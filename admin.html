@@ -1626,11 +1626,10 @@
             if (normSel.includes('kien truc')) {
                 return normItem.includes('kien truc') || normItem.includes('quy hoach') || normItem.includes('noi that');
             }
-
             return normItem.includes(normSel);
         }
 
-        // LỌC REALTIME TRÊN BẢNG (Theo Tìm kiếm, Khoa, Sự kiện)
+        // LỌC DỮ LIỆU ĐIỂM DANH
         function filterAttendanceTable() {
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
             const facultyFilter = document.getElementById('attendanceFacultyFilter') ? document.getElementById('attendanceFacultyFilter').value : '';
@@ -1658,11 +1657,10 @@
 
                 return matchesSearch && matchesFaculty && matchesActivity;
             });
-
             renderAttendanceTable(filtered);
         }
 
-        // XUẤT FILE EXCEL (Dạng CSV UTF-8 hỗ trợ Excel không lỗi Tiếng Việt)
+        // XUẤT FILE EXCEL (CSV)
         function exportToExcel() {
             const role = sessionStorage.getItem("admin_role");
             if (role === "staff") {
@@ -1735,70 +1733,6 @@
             let facultyTag = facultyFilter ? removeVietnameseTones(facultyFilter).replace(/\s+/g, '_').toUpperCase() : '';
             let actTag = actFilter ? actFilter.toUpperCase() : 'Tat_Ca';
             const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0,10)}.csv`;
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }L (Dạng CSV UTF-8 hỗ trợ Excel không lỗi Tiếng Việt)
-        function exportToExcel() {
-            const role = sessionStorage.getItem("admin_role");
-            if (role === "staff") {
-                alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
-                return;
-            }
-
-            const searchQuery = document.getElementById('attendanceSearch').value.toLowerCase().trim();
-            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
-
-            const filtered = attendanceData.filter(item => {
-                const nameStr = String(item.name || '');
-                const codeStr = String(item.studentCode || '');
-                const classStr = String(item.className || '');
-                const actCodeStr = String(item.code || '');
-                const matchesSearch = nameStr.toLowerCase().includes(searchQuery) ||
-                                      codeStr.toLowerCase().includes(searchQuery) ||
-                                      classStr.toLowerCase().includes(searchQuery);
-                const matchesActivity = !actFilter || actCodeStr.toLowerCase() === actFilter;
-                return matchesSearch && matchesActivity;
-            });
-
-            if (filtered.length === 0) {
-                alert('Không có dữ liệu nào phù hợp để xuất file Excel!');
-                return;
-            }
-
-            // Định dạng tiêu đề cột
-            let csvContent = "\uFEFF"; // Byte Order Mark (BOM) để Excel đọc đúng tiếng Việt UTF-8
-            csvContent += "STT,Thời Gian,Mã Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Khoảng Cách,Thiết Bị,Tọa độ sự kiện,Số Điện Thoại,Gmail,Tên Sự Kiện,IP Máy\r\n";
-
-            filtered.forEach((item, idx) => {
-                const row = [
-                    idx + 1,
-                    `"${item.timestamp}"`,
-                    `"${item.code}"`,
-                    `"${item.studentCode}"`,
-                    `"${item.name}"`,
-                    `"${item.className || ''}"`,
-                    `"${item.faculty || ''}"`,
-                    `"${item.distance || ''}"`,
-                    `"${item.device || ''}"`,
-                    `"${item.coords || ''}"`,
-                    `"${item.phoneNumber || ''}"`,
-                    `"${item.email || ''}"`,
-                    `"${item.title || ''}"`,
-                    `"${item.ip || ''}"`
-                ];
-                csvContent += row.join(",") + "\r\n";
-            });
-
-            // Tạo link tải file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            
-            const filename = `Danh_Sach_Diem_Danh_${actFilter ? actFilter.toUpperCase() : 'Tat_Ca'}_${new Date().toISOString().slice(0,10)}.csv`;
             link.setAttribute("download", filename);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
