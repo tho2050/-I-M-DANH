@@ -1966,6 +1966,40 @@
 
 const HEADERS = ["STT", "Thời Gian", "Mã Sự Kiện", "Tên Sự Kiện", "MSSV", "Họ và Tên", "Lớp", "Khoa", "Số Điện Thoại", "Gmail", "Khoảng Cách", "Thiết Bị", "Tọa độ sự kiện", "IP Máy"];
 
+// 1. HÀM CHẠY 1 LẦN: TẠO NGAY 4 TAB KHOA RIÊNG BIỆT TRÊN GOOGLE SHEETS
+function taoNgay4TabKhoa() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const dsKhoa = [
+    { name: "Khoa Kỹ thuật Công nghệ", color: "#2563eb" },
+    { name: "Khoa Kinh tế", color: "#16a34a" },
+    { name: "Khoa Xây dựng", color: "#d97706" },
+    { name: "Khoa Kiến trúc", color: "#7c3aed" }
+  ];
+
+  // Đổi tên Sheet đầu tiên thành "Tất cả điểm danh" nếu chưa có
+  let firstSheet = ss.getSheets()[0];
+  if (!ss.getSheetByName("Tất cả điểm danh")) {
+    firstSheet.setName("Tất cả điểm danh");
+  }
+  let allSheet = ss.getSheetByName("Tất cả điểm danh");
+  if (allSheet.getLastRow() === 0) {
+    allSheet.appendRow(HEADERS);
+    allSheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+    allSheet.setFrozenRows(1);
+  }
+
+  // Tạo 4 Sheet cho 4 Khoa
+  dsKhoa.forEach(k => {
+    let s = ss.getSheetByName(k.name);
+    if (!s) {
+      s = ss.insertSheet(k.name);
+      s.appendRow(HEADERS);
+      s.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold").setBackground(k.color).setFontColor("#ffffff");
+      s.setFrozenRows(1);
+    }
+  });
+}
+
 function getTargetSheetName(facultyName) {
   if (!facultyName) return "Khoa Khác";
   const str = facultyName.toString().toLowerCase();
