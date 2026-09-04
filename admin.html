@@ -242,8 +242,22 @@
                 <div class="card card-custom p-4 d-none" id="tab-attendance-list">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-primary me-2"></i>Danh sách sinh viên điểm danh</h5>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-success fw-bold" id="btnExportExcel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel</button>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success fw-bold" onclick="exportMultiSheetExcel(event)">
+                                    <i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel (4 Khoa)
+                                </button>
+                                <button type="button" class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="visually-hidden">Tùy chọn xuất</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li><a class="dropdown-item fw-bold text-success" href="#" onclick="exportMultiSheetExcel(event)"><i class="fa-solid fa-table-cells me-2"></i>Xuất 1 File Excel (Gồm 4 Sheet 4 Khoa + Tổng hợp)</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportFourSeparateFiles(event)"><i class="fa-solid fa-copy me-2"></i>Xuất 4 File Riêng Biệt Cho Từng Khoa</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportToExcel(event)"><i class="fa-solid fa-filter me-2"></i>Xuất Theo Bộ Lọc Đang Chọn</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="showGoogleSheetGuideModal()"><i class="fa-solid fa-sheet-plastic me-1"></i> Cấu hình Google Sheets 4 Khoa</button>
                             <button class="btn btn-sm btn-outline-secondary" onclick="fetchAttendanceData()"><i class="fa-solid fa-rotate me-1"></i> Tải lại</button>
                         </div>
                     </div>
@@ -453,9 +467,55 @@
         </div>
     </div>
 
+    <!-- Modal Hướng Dẫn Cấu Hình Google Sheets 4 Khoa -->
+    <div class="modal fade" id="googleSheetGuideModal" tabindex="-1" aria-labelledby="gsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
+                <div class="modal-header bg-success text-white py-3" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h5 class="modal-title fw-bold" id="gsModalLabel"><i class="fa-solid fa-sheet-plastic me-2"></i>Cấu Hình Google Sheets Tự Động Chia 4 Khoa Riêng Biệt</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" style="font-size: 0.9rem;">
+                    <div class="alert alert-primary py-2 px-3 mb-3">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        Khi cấu hình mã này, sinh viên khi điểm danh sẽ <strong>tự động được phân loại vào đúng 4 trang tính (Sheets) riêng biệt</strong> tương ứng với từng Khoa trong Google Sheets của bạn:
+                        <ul class="mb-0 mt-1 small">
+                            <li><strong>Khoa Kỹ thuật Công nghệ</strong></li>
+                            <li><strong>Khoa Kinh tế</strong></li>
+                            <li><strong>Khoa Xây dựng</strong></li>
+                            <li><strong>Khoa Kiến trúc</strong></li>
+                            <li>Kèm 1 Sheet chính: <strong>Tất cả điểm danh</strong></li>
+                        </ul>
+                    </div>
+
+                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-list-ol me-2 text-primary"></i>Các bước thực hiện trong Google Sheets:</h6>
+                    <ol class="mb-3 ps-3">
+                        <li class="mb-1">Mở Google Spreadsheet của bạn.</li>
+                        <li class="mb-1">Vào menu: <strong>Tiện ích mở rộng (Extensions)</strong> &rarr; chọn <strong>Apps Script</strong>.</li>
+                        <li class="mb-1">Xóa toàn bộ mã cũ trong file <code>Mã.gs</code> (hoặc <code>Code.gs</code>).</li>
+                        <li class="mb-1">Dán toàn bộ đoạn mã bên dưới vào.</li>
+                        <li class="mb-1">Nhấn biểu tượng <strong>Lưu (Save)</strong> &rarr; Chọn <strong>Triển khai (Deploy)</strong> &rarr; <strong>Bản triển khai mới (New deployment)</strong> &rarr; Loại: <strong>Ứng dụng web (Web App)</strong> &rarr; Ai có quyền truy cập: <strong>Bất kỳ ai (Anyone)</strong> &rarr; Nhấn <strong>Triển khai (Deploy)</strong>.</li>
+                    </ol>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small text-secondary">Mã nguồn Google Apps Script (Code.gs):</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="copyGoogleScriptCode()"><i class="fa-solid fa-copy me-1"></i> Sao chép toàn bộ mã</button>
+                    </div>
+
+                    <pre id="googleScriptCodeBlock" class="p-3 bg-dark text-light rounded font-monospace small" style="max-height: 280px; overflow-y: auto; user-select: all;"></pre>
+                </div>
+                <div class="modal-footer bg-light p-3" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="copyGoogleScriptCode()"><i class="fa-solid fa-copy me-1"></i> Sao Chép Mã</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="config.js?v=3.0"></script>
     <script>
         let selectMap, selectMarker;
@@ -1660,8 +1720,192 @@
             renderAttendanceTable(filtered);
         }
 
-        // XUẤT FILE EXCEL (CSV)
-        function exportToExcel() {
+        // CHUẨN BỊ DỮ LIỆU BẢNG ĐIỂM DANH CHO SHEETJS (XLSX)
+        function createAttendanceSheetData(records) {
+            const header = ["STT", "Thời Gian", "Mã Sự Kiện", "Tên Sự Kiện", "MSSV", "Họ và Tên", "Lớp", "Khoa", "Số Điện Thoại", "Gmail", "Khoảng Cách", "Thiết Bị", "Tọa độ sự kiện", "IP Máy"];
+            const rows = records.map((item, idx) => [
+                idx + 1,
+                item.timestamp || '',
+                item.code || '',
+                item.title || '',
+                item.studentCode || '',
+                item.name || '',
+                item.className || '',
+                item.faculty || '',
+                item.phoneNumber || '',
+                item.email || '',
+                item.distance || '',
+                item.device || '',
+                item.coords || '',
+                item.ip || ''
+            ]);
+            if (typeof XLSX === 'undefined') return { header, rows };
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            ws['!cols'] = [
+                { wch: 6 },  // STT
+                { wch: 20 }, // Thời gian
+                { wch: 14 }, // Mã SK
+                { wch: 25 }, // Tên SK
+                { wch: 14 }, // MSSV
+                { wch: 22 }, // Họ Tên
+                { wch: 14 }, // Lớp
+                { wch: 26 }, // Khoa
+                { wch: 14 }, // SĐT
+                { wch: 25 }, // Email
+                { wch: 12 }, // Khoảng cách
+                { wch: 20 }, // Thiết bị
+                { wch: 24 }, // Tọa độ
+                { wch: 16 }  // IP
+            ];
+            return ws;
+        }
+
+        // 1. XUẤT 1 FILE EXCEL GỒM 4 SHEET RIÊNG BIỆT CHO 4 KHOA + SHEET TỔNG HỢP
+        function exportMultiSheetExcel(e) {
+            if (e) e.preventDefault();
+            const role = sessionStorage.getItem("admin_role");
+            if (role === "staff") {
+                alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
+                return;
+            }
+            if (!attendanceData || attendanceData.length === 0) {
+                alert("Chưa có dữ liệu điểm danh nào để xuất!");
+                return;
+            }
+
+            const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
+            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
+
+            const baseData = attendanceData.filter(item => {
+                const nameStr = removeVietnameseTones(item.name || '');
+                const codeStr = removeVietnameseTones(item.studentCode || '');
+                const classStr = removeVietnameseTones(item.className || '');
+                const facultyStr = removeVietnameseTones(item.faculty || '');
+                const phoneStr = removeVietnameseTones(item.phoneNumber || '');
+                const emailStr = removeVietnameseTones(item.email || '');
+                const actCodeStr = String(item.code || '').toLowerCase();
+
+                const matchesSearch = !searchQuery || 
+                                      nameStr.includes(searchQuery) ||
+                                      codeStr.includes(searchQuery) ||
+                                      classStr.includes(searchQuery) ||
+                                      facultyStr.includes(searchQuery) ||
+                                      phoneStr.includes(searchQuery) ||
+                                      emailStr.includes(searchQuery);
+
+                const matchesActivity = !actFilter || actCodeStr === actFilter;
+                return matchesSearch && matchesActivity;
+            });
+
+            if (baseData.length === 0) {
+                alert('Không có dữ liệu điểm danh phù hợp với bộ lọc để xuất!');
+                return;
+            }
+
+            if (typeof XLSX !== 'undefined') {
+                const wb = XLSX.utils.book_new();
+
+                // 1. Sheet Tất Cả
+                const wsAll = createAttendanceSheetData(baseData);
+                XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả Điểm Danh");
+
+                // 2. Sheet Khoa Kỹ Thuật Công Nghệ
+                const dataKTCN = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kỹ thuật Công nghệ'));
+                const wsKTCN = createAttendanceSheetData(dataKTCN);
+                XLSX.utils.book_append_sheet(wb, wsKTCN, "Khoa KT - Công Nghệ");
+
+                // 3. Sheet Khoa Kinh Tế
+                const dataKT = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kinh tế'));
+                const wsKT = createAttendanceSheetData(dataKT);
+                XLSX.utils.book_append_sheet(wb, wsKT, "Khoa Kinh Tế");
+
+                // 4. Sheet Khoa Xây Dựng
+                const dataXD = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Xây dựng'));
+                const wsXD = createAttendanceSheetData(dataXD);
+                XLSX.utils.book_append_sheet(wb, wsXD, "Khoa Xây Dựng");
+
+                // 5. Sheet Khoa Kiến Trúc
+                const dataKTruc = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kiến trúc'));
+                const wsKTruc = createAttendanceSheetData(dataKTruc);
+                XLSX.utils.book_append_sheet(wb, wsKTruc, "Khoa Kiến Trúc");
+
+                const filename = `Danh_Sach_Diem_Danh_4_Khoa_${actFilter ? actFilter.toUpperCase() + '_' : ''}${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, filename);
+            } else {
+                exportToExcel();
+            }
+        }
+
+        // 2. XUẤT 4 FILE EXCEL / CSV RIÊNG BIỆT CHO 4 KHOA
+        function exportFourSeparateFiles(e) {
+            if (e) e.preventDefault();
+            const role = sessionStorage.getItem("admin_role");
+            if (role === "staff") {
+                alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
+                return;
+            }
+            const faculties = [
+                { name: 'Khoa Kỹ thuật Công nghệ', key: 'Khoa_KT_CongNghe' },
+                { name: 'Khoa Kinh tế', key: 'Khoa_KinhTe' },
+                { name: 'Khoa Xây dựng', key: 'Khoa_XayDung' },
+                { name: 'Khoa Kiến trúc', key: 'Khoa_KienTruc' }
+            ];
+
+            let exportedCount = 0;
+            faculties.forEach((fac, i) => {
+                setTimeout(() => {
+                    const facData = attendanceData.filter(item => matchFaculty(item.faculty, fac.name));
+                    if (facData.length > 0) {
+                        exportedCount++;
+                        if (typeof XLSX !== 'undefined') {
+                            const wb = XLSX.utils.book_new();
+                            const ws = createAttendanceSheetData(facData);
+                            XLSX.utils.book_append_sheet(wb, ws, fac.key);
+                            XLSX.writeFile(wb, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0,10)}.xlsx`);
+                        } else {
+                            exportSingleCsv(facData, `Danh_Sach_Diem_Danh_${fac.key}_${new Date().toISOString().slice(0,10)}.csv`);
+                        }
+                    }
+                }, i * 350);
+            });
+        }
+
+        function exportSingleCsv(filtered, filename) {
+            let csvContent = "\uFEFF";
+            csvContent += "STT,Thời Gian,Mã Sự Kiện,Tên Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Số Điện Thoại,Gmail,Khoảng Cách,Thiết Bị,Tọa độ sự kiện,IP Máy\r\n";
+            filtered.forEach((item, idx) => {
+                const row = [
+                    idx + 1,
+                    `"${item.timestamp}"`,
+                    `"${item.code}"`,
+                    `"${item.title || ''}"`,
+                    `"${item.studentCode}"`,
+                    `"${item.name}"`,
+                    `"${item.className || ''}"`,
+                    `"${item.faculty || ''}"`,
+                    `"${item.phoneNumber || ''}"`,
+                    `"${item.email || ''}"`,
+                    `"${item.distance || ''}"`,
+                    `"${item.device || ''}"`,
+                    `"${item.coords || ''}"`,
+                    `"${item.ip || ''}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 3. XUẤT THEO BỘ LỌC HIỆN TẠI
+        function exportToExcel(e) {
+            if (e) e.preventDefault();
             const role = sessionStorage.getItem("admin_role");
             if (role === "staff") {
                 alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
@@ -1700,44 +1944,221 @@
                 return;
             }
 
-            // Định dạng tiêu đề cột
-            let csvContent = "\uFEFF"; // Byte Order Mark (BOM) để Excel đọc đúng tiếng Việt UTF-8
-            csvContent += "STT,Thời Gian,Mã Sự Kiện,Tên Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Số Điện Thoại,Gmail,Khoảng Cách,Thiết Bị,Tọa độ sự kiện,IP Máy\r\n";
-
-            filtered.forEach((item, idx) => {
-                const row = [
-                    idx + 1,
-                    `"${item.timestamp}"`,
-                    `"${item.code}"`,
-                    `"${item.title || ''}"`,
-                    `"${item.studentCode}"`,
-                    `"${item.name}"`,
-                    `"${item.className || ''}"`,
-                    `"${item.faculty || ''}"`,
-                    `"${item.phoneNumber || ''}"`,
-                    `"${item.email || ''}"`,
-                    `"${item.distance || ''}"`,
-                    `"${item.device || ''}"`,
-                    `"${item.coords || ''}"`,
-                    `"${item.ip || ''}"`
-                ];
-                csvContent += row.join(",") + "\r\n";
-            });
-
-            // Tạo link tải file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            
             let facultyTag = facultyFilter ? removeVietnameseTones(facultyFilter).replace(/\s+/g, '_').toUpperCase() : '';
             let actTag = actFilter ? actFilter.toUpperCase() : 'Tat_Ca';
-            const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0,10)}.csv`;
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0,10)}`;
+
+            if (typeof XLSX !== 'undefined') {
+                const wb = XLSX.utils.book_new();
+                const ws = createAttendanceSheetData(filtered);
+                XLSX.utils.book_append_sheet(wb, ws, facultyFilter ? facultyFilter.substring(0, 30) : "Điểm Danh");
+                XLSX.writeFile(wb, filename + '.xlsx');
+            } else {
+                exportSingleCsv(filtered, filename + '.csv');
+            }
+        }
+
+        // HƯỚNG DẪN VÀ SAO CHÉP MÃ GOOGLE APPS SCRIPT CHO 4 KHOA
+        const GOOGLE_APPS_SCRIPT_TEMPLATE = `// ==========================================
+// HỆ THỐNG ĐIỂM DANH GPS - GOOGLE APPS SCRIPT
+// HỖ TRỢ TỰ ĐỘNG PHÂN CHIA 4 KHOA RIÊNG BIỆT
+// ==========================================
+
+const HEADERS = ["STT", "Thời Gian", "Mã Sự Kiện", "Tên Sự Kiện", "MSSV", "Họ và Tên", "Lớp", "Khoa", "Số Điện Thoại", "Gmail", "Khoảng Cách", "Thiết Bị", "Tọa độ sự kiện", "IP Máy"];
+
+function getTargetSheetName(facultyName) {
+  if (!facultyName) return "Khoa Khác";
+  const str = facultyName.toString().toLowerCase();
+  if (str.includes("kỹ thuật") || str.includes("ky thuat") || str.includes("công nghệ") || str.includes("cong nghe") || str.includes("cntt") || str.includes("it")) {
+    return "Khoa Kỹ thuật Công nghệ";
+  }
+  if (str.includes("kinh tế") || str.includes("kinh te") || str.includes("quản trị") || str.includes("kế toán")) {
+    return "Khoa Kinh tế";
+  }
+  if (str.includes("xây dựng") || str.includes("xay dung") || str.includes("cầu đường") || str.includes("công trình")) {
+    return "Khoa Xây dựng";
+  }
+  if (str.includes("kiến trúc") || str.includes("kien truc") || str.includes("quy hoạch") || str.includes("nội thất")) {
+    return "Khoa Kiến trúc";
+  }
+  return "Khoa Khác";
+}
+
+function getOrCreateSheet(ss, sheetName, tabColor) {
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold").setBackground(tabColor || "#1a4b8c").setFontColor("#ffffff");
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const contents = e.postData ? e.postData.contents : "{}";
+    const data = JSON.parse(contents);
+    const action = (e.parameter && e.parameter.action) ? e.parameter.action : "";
+
+    // 1. LƯU DANH SÁCH SỰ KIỆN
+    if (action === "saveActivities") {
+      let actSheet = ss.getSheetByName("Activities");
+      if (!actSheet) {
+        actSheet = ss.insertSheet("Activities");
+        actSheet.appendRow(["Mã", "Tên Sự Kiện", "Mô Tả", "Bán Kính", "Vĩ Độ", "Kinh Độ", "Bắt Đầu", "Kết Thúc", "Địa Chỉ"]);
+        actSheet.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#334155").setFontColor("#ffffff");
+      } else {
+        const lastRow = actSheet.getLastRow();
+        if (lastRow > 1) {
+          actSheet.getRange(2, 1, lastRow - 1, 9).clearContent();
+        }
+      }
+      const list = data.activities || [];
+      list.forEach(a => {
+        actSheet.appendRow([a.code, a.title, a.description || "", a.radius, a.latitude, a.longitude, a.start, a.end, a.locationAddress || ""]);
+      });
+      return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 2. GHI NHẬN ĐIỂM DANH SINH VIÊN (TỰ ĐỘNG LƯU VÀO TẤT CẢ VÀ SHEET KHOA RIÊNG)
+    const now = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss");
+    
+    // 2.1. Ghi vào Sheet Tổng Hợp (Tất cả điểm danh)
+    let allSheet = ss.getSheetByName("Tất cả điểm danh") || ss.getSheets()[0];
+    if (allSheet.getLastRow() === 0) {
+      allSheet.appendRow(HEADERS);
+      allSheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+      allSheet.setFrozenRows(1);
+    }
+    const nextSttAll = Math.max(1, allSheet.getLastRow());
+    const rowData = [
+      nextSttAll,
+      now,
+      data.code || "",
+      data.title || "",
+      data.studentCode || "",
+      data.name || "",
+      data.className || "",
+      data.faculty || "",
+      data.phoneNumber || "",
+      data.email || "",
+      data.distance || "",
+      data.device || "",
+      data.coords || "",
+      data.ip || ""
+    ];
+    allSheet.appendRow(rowData);
+
+    // 2.2. Ghi vào Sheet Khoa tương ứng
+    const facultySheetName = getTargetSheetName(data.faculty);
+    const facSheet = getOrCreateSheet(ss, facultySheetName, "#1e40af");
+    const nextSttFac = Math.max(1, facSheet.getLastRow());
+    const facRowData = [...rowData];
+    facRowData[0] = nextSttFac; // Cập nhật STT riêng cho từng Khoa
+    facSheet.appendRow(facRowData);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Điểm danh thành công!" }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+
+  if (action === "getActivities") {
+    const actSheet = ss.getSheetByName("Activities");
+    if (!actSheet || actSheet.getLastRow() < 2) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    const rows = actSheet.getRange(2, 1, actSheet.getLastRow() - 1, 9).getValues();
+    const result = rows.map(r => ({
+      code: String(r[0]),
+      title: String(r[1]),
+      description: String(r[2]),
+      radius: Number(r[3]),
+      latitude: Number(r[4]),
+      longitude: Number(r[5]),
+      start: String(r[6]),
+      end: String(r[7]),
+      locationAddress: String(r[8])
+    }));
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Mặc định: Trả về danh sách điểm danh từ Sheet Tổng Hợp
+  const allSheet = ss.getSheetByName("Tất cả điểm danh") || ss.getSheets()[0];
+  if (allSheet.getLastRow() < 2) {
+    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  }
+  const rows = allSheet.getRange(2, 1, allSheet.getLastRow() - 1, HEADERS.length).getValues();
+  const list = rows.map(r => ({
+    timestamp: r[1],
+    code: r[2],
+    title: r[3],
+    studentCode: r[4],
+    name: r[5],
+    className: r[6],
+    faculty: r[7],
+    phoneNumber: r[8],
+    email: r[9],
+    distance: r[10],
+    device: r[11],
+    coords: r[12],
+    ip: r[13]
+  }));
+  return ContentService.createTextOutput(JSON.stringify(list)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// HÀM CHẠY 1 LẦN: TỰ ĐỘNG PHÂN LOẠI CÁC DÒNG ĐIỂM DANH CŨ VÀO 4 KHOA
+function phanLoaiDuLieuCuVao4Khoa() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const allSheet = ss.getSheetByName("Tất cả điểm danh") || ss.getSheets()[0];
+  if (allSheet.getLastRow() < 2) return;
+  const rows = allSheet.getRange(2, 1, allSheet.getLastRow() - 1, HEADERS.length).getValues();
+
+  rows.forEach(r => {
+    const facName = r[7];
+    const sheetName = getTargetSheetName(facName);
+    const targetSheet = getOrCreateSheet(ss, sheetName, "#1e40af");
+    const nextStt = Math.max(1, targetSheet.getLastRow());
+    const rowData = [...r];
+    rowData[0] = nextStt;
+    targetSheet.appendRow(rowData);
+  });
+}`;
+
+        function showGoogleSheetGuideModal() {
+            const pre = document.getElementById('googleScriptCodeBlock');
+            if (pre) pre.textContent = GOOGLE_APPS_SCRIPT_TEMPLATE;
+            const modalEl = document.getElementById('googleSheetGuideModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        }
+
+        function copyGoogleScriptCode() {
+            navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE).then(() => {
+                alert('Đã sao chép toàn bộ mã Google Apps Script! Bạn hãy vào Google Sheets > Tiện ích mở rộng > Apps Script và dán vào.');
+            }).catch(() => {
+                const pre = document.getElementById('googleScriptCodeBlock');
+                if (pre) {
+                    const range = document.createRange();
+                    range.selectNodeContents(pre);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    document.execCommand('copy');
+                    alert('Đã chọn và sao chép mã nguồn!');
+                }
+            });
         }
 
         function printQr(code, title, radius) {
