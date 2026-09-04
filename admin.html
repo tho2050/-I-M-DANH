@@ -250,10 +250,19 @@
                     
                     <!-- Filters -->
                     <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <input type="text" id="attendanceSearch" class="form-control form-control-sm" placeholder="Tìm tên, MSSV, lớp..." oninput="filterAttendanceTable()" />
+                        <div class="col-md-5">
+                            <input type="text" id="attendanceSearch" class="form-control form-control-sm" placeholder="Tìm tên, MSSV, lớp, khoa, SĐT..." oninput="filterAttendanceTable()" />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <select id="attendanceFacultyFilter" class="form-select form-select-sm" onchange="filterAttendanceTable()">
+                                <option value="">-- Tất cả các khoa --</option>
+                                <option value="Khoa Kỹ thuật Công nghệ">Khoa Kỹ thuật Công nghệ</option>
+                                <option value="Khoa Kinh tế">Khoa Kinh tế</option>
+                                <option value="Khoa Xây dựng">Khoa Xây dựng</option>
+                                <option value="Khoa Kiến trúc">Khoa Kiến trúc</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <select id="attendanceActivityFilter" class="form-select form-select-sm" onchange="filterAttendanceTable()">
                                 <option value="">-- Tất cả sự kiện --</option>
                             </select>
@@ -1505,14 +1514,10 @@
                 filterSelect.innerHTML += `<option value="${a.code}">${a.code} - ${a.title}</option>`;
             });
 
-            // Lấy dữ liệu điểm danh đã lưu cục bộ (nếu có khi điền form trên máy)
+            // Lấy dữ liệu điểm danh đã lưu cục bộ
             const localRecords = localStorage.getItem("gps_attendance_local_records")
                 ? JSON.parse(localStorage.getItem("gps_attendance_local_records"))
                 : [];
-
-            // Kiểm tra cấu hình Google Script Url
-            const scriptUrl = CONFIG.googleScriptUrl;
-            const hasRealConfig = scriptUrl && scriptUrl.trim() !== "";
 
             function deduplicateAttendanceRecords(records) {
                 if (!Array.isArray(records)) return [];
@@ -1526,85 +1531,40 @@
                 });
             }
 
+            const scriptUrl = CONFIG.googleScriptUrl;
+            const hasRealConfig = scriptUrl && scriptUrl.trim() !== "";
+
             if (!hasRealConfig) {
-                // Tự động nạp Dữ liệu mẫu (Mock data) gộp với LocalStorage để chạy thử
-                console.log("Sử dụng Dữ liệu điểm danh giả lập gộp với LocalStorage");
                 setTimeout(() => {
                     const mockData = [
-                        { timestamp: "27/08/2026 13:32:05", code: "SVTN2026", studentCode: "21000123", name: "Nguyễn Văn An", className: "CNTT-K21A", faculty: "Công Nghệ Thông Tin", distance: "3.9m", device: "iPhone 15 Pro Max" },
-                        { timestamp: "27/08/2026 13:34:12", code: "SVTN2026", studentCode: "21000456", name: "Trần Thị Bình", className: "CNTT-K21A", faculty: "Công Nghệ Thông Tin", distance: "12.4m", device: "Samsung Galaxy S24" },
-                        { timestamp: "27/08/2026 14:02:45", code: "WORKSHOP-AI", studentCode: "21000789", name: "Lê Văn Nam", className: "CNTT-K21B", faculty: "Điện - Điện tử", distance: "45.1m", device: "Xiaomi 14 Ultra" }
+                        { timestamp: "27/08/2026 13:32:05", code: "SVTN2026", studentCode: "21000123", name: "Nguyễn Văn An", className: "CNTT-K21A", faculty: "Khoa Kỹ thuật Công nghệ", distance: "3.9m", device: "iPhone 15 Pro Max" },
+                        { timestamp: "27/08/2026 13:34:12", code: "SVTN2026", studentCode: "21000456", name: "Trần Thị Bình", className: "KT-K21A", faculty: "Khoa Kinh tế", distance: "12.4m", device: "Samsung Galaxy S24" },
+                        { timestamp: "27/08/2026 14:02:45", code: "WORKSHOP-AI", studentCode: "21000789", name: "Lê Văn Nam", className: "XD-K21B", faculty: "Khoa Xây dựng", distance: "45.1m", device: "Xiaomi 14 Ultra" }
                     ];
-                    // Gộp LocalStorage lên đầu bảng
                     attendanceData = deduplicateAttendanceRecords([...localRecords, ...mockData]);
-                    renderAttendanceTable(attendanceData);
+                    filterAttendanceTable();
                 }, 500);
                 return;
             }
 
-            // Nếu có link thật, fetch JSON trực tiếp từ Google Apps Script Web App
             try {
                 const res = await fetch(scriptUrl);
                 const sheetData = await res.json();
                 attendanceData = deduplicateAttendanceRecords([...localRecords, ...sheetData]);
-                renderAttendanceTable(attendanceData);
+                filterAttendanceTable();
             } catch (err) {
                 console.error("Lỗi khi fetch dữ liệu từ Google Apps Script", err);
-                // Nếu lỗi, vẫn hiển thị các bản ghi cục bộ đã lưu
                 attendanceData = deduplicateAttendanceRecords(localRecords);
-                renderAttendanceTable(attendanceData);
+                filterAttendanceTable();
             }
-        }
-
-        // PARSE CSV THÀNH ARRAY OBJECT
-        function parseCsvData(csvText) {
-            const lines = csvText.split('\n');
-            const result = [];
-            // Bỏ dòng tiêu đề đầu tiên
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
-                // Parse CSV đơn giản hỗ trợ dấu phẩy trong nháy kép
-                const cols = [];
-                let insideQuote = false;
-                let current = '';
-                for (let j = 0; j < line.length; j++) {
-                    const char = line[charPosition = j];
-                    if (char === '"') {
-                        insideQuote = !insideQuote;
-                    } else if (char === ',' && !insideQuote) {
-                        cols.push(current.replace(/^"|"$/g, ''));
-                        current = '';
-                    } else {
-                        current += char;
-                    }
-                }
-                cols.push(current.replace(/^"|"$/g, ''));
-
-                if (cols.length >= 3) {
-                    // Cấu trúc cột tương ứng Google Form của bạn:
-                    // 0: Timestamp, 1: ActivityCode, 2: StudentCode, 3: FullName, 4: ClassName, 5: Faculty, 6: Phone, 7: Email, 8: Coords, 9: Distance, 10: DeviceInfo
-                    result.push({
-                        timestamp: cols[0] || '',
-                        code: cols[1] || '',
-                        studentCode: cols[2] || '',
-                        name: cols[3] || '',
-                        className: cols[4] || '',
-                        faculty: cols[5] || '',
-                        distance: cols[9] || '',
-                        device: cols[10] || ''
-                    });
-                }
-            }
-            return result;
         }
 
         // HIỂN THỊ DỮ LIỆU LÊN BẢNG
         function renderAttendanceTable(data) {
             const tbody = document.getElementById('attendanceTableBody');
+            if (!tbody) return;
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">Chưa có ai điểm danh.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">Chưa có ai điểm danh hoặc không tìm thấy kết quả phù hợp.</td></tr>`;
                 return;
             }
 
@@ -1617,7 +1577,7 @@
                     <td class="font-monospace fw-bold">${item.studentCode}</td>
                     <td>${item.name}</td>
                     <td>${item.className || '--'}</td>
-                    <td>${item.faculty || '--'}</td>
+                    <td><span class="badge bg-light text-dark border">${item.faculty || '--'}</span></td>
                     <td class="font-monospace">${item.phoneNumber || '--'}</td>
                     <td class="small">${item.email || '--'}</td>
                     <td><span class="text-success fw-bold">${item.distance}</span></td>
@@ -1628,27 +1588,152 @@
             `).join('');
         }
 
-        // LỌC REALTIME TRÊN BẢNG
+        // Chuẩn hóa chuỗi tiếng Việt không dấu
+        function removeVietnameseTones(str) {
+            if (!str) return '';
+            str = String(str);
+            str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            str = str.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+            return str.toLowerCase().trim();
+        }
+
+        // Kiểm tra so khớp Khoa
+        function matchFaculty(itemFaculty, selectedFaculty) {
+            if (!selectedFaculty) return true;
+            if (!itemFaculty) return false;
+            
+            const normItem = removeVietnameseTones(itemFaculty);
+            const normSel = removeVietnameseTones(selectedFaculty);
+
+            if (normItem.includes(normSel) || normSel.includes(normItem)) return true;
+
+            if (normSel.includes('ky thuat cong nghe')) {
+                return normItem.includes('ky thuat') || normItem.includes('cong nghe') || normItem.includes('cntt') || normItem.includes('it') || normItem.includes('dien') || normItem.includes('co khi');
+            }
+            if (normSel.includes('kinh te')) {
+                return normItem.includes('kinh te') || normItem.includes('quan tri') || normItem.includes('ke toan') || normItem.includes('tai chinh');
+            }
+            if (normSel.includes('xay dung')) {
+                return normItem.includes('xay dung') || normItem.includes('cau duong') || normItem.includes('cong trinh');
+            }
+            if (normSel.includes('kien truc')) {
+                return normItem.includes('kien truc') || normItem.includes('quy hoach') || normItem.includes('noi that');
+            }
+
+            return normItem.includes(normSel);
+        }
+
+        // LỌC REALTIME TRÊN BẢNG (Theo Tìm kiếm, Khoa, Sự kiện)
         function filterAttendanceTable() {
-            const searchQuery = document.getElementById('attendanceSearch').value.toLowerCase().trim();
+            const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
+            const facultyFilter = document.getElementById('attendanceFacultyFilter') ? document.getElementById('attendanceFacultyFilter').value : '';
             const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
 
             const filtered = attendanceData.filter(item => {
-                const nameStr = String(item.name || '');
-                const codeStr = String(item.studentCode || '');
-                const classStr = String(item.className || '');
-                const actCodeStr = String(item.code || '');
-                const matchesSearch = nameStr.toLowerCase().includes(searchQuery) ||
-                                      codeStr.toLowerCase().includes(searchQuery) ||
-                                      classStr.toLowerCase().includes(searchQuery);
-                const matchesActivity = !actFilter || actCodeStr.toLowerCase() === actFilter;
-                return matchesSearch && matchesActivity;
+                const nameStr = removeVietnameseTones(item.name || '');
+                const codeStr = removeVietnameseTones(item.studentCode || '');
+                const classStr = removeVietnameseTones(item.className || '');
+                const facultyStr = removeVietnameseTones(item.faculty || '');
+                const phoneStr = removeVietnameseTones(item.phoneNumber || '');
+                const emailStr = removeVietnameseTones(item.email || '');
+                const actCodeStr = String(item.code || '').toLowerCase();
+
+                const matchesSearch = !searchQuery || 
+                                      nameStr.includes(searchQuery) ||
+                                      codeStr.includes(searchQuery) ||
+                                      classStr.includes(searchQuery) ||
+                                      facultyStr.includes(searchQuery) ||
+                                      phoneStr.includes(searchQuery) ||
+                                      emailStr.includes(searchQuery);
+
+                const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
+                const matchesActivity = !actFilter || actCodeStr === actFilter;
+
+                return matchesSearch && matchesFaculty && matchesActivity;
             });
 
             renderAttendanceTable(filtered);
         }
 
         // XUẤT FILE EXCEL (Dạng CSV UTF-8 hỗ trợ Excel không lỗi Tiếng Việt)
+        function exportToExcel() {
+            const role = sessionStorage.getItem("admin_role");
+            if (role === "staff") {
+                alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
+                return;
+            }
+
+            const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
+            const facultyFilter = document.getElementById('attendanceFacultyFilter') ? document.getElementById('attendanceFacultyFilter').value : '';
+            const actFilter = document.getElementById('attendanceActivityFilter').value.toLowerCase();
+
+            const filtered = attendanceData.filter(item => {
+                const nameStr = removeVietnameseTones(item.name || '');
+                const codeStr = removeVietnameseTones(item.studentCode || '');
+                const classStr = removeVietnameseTones(item.className || '');
+                const facultyStr = removeVietnameseTones(item.faculty || '');
+                const phoneStr = removeVietnameseTones(item.phoneNumber || '');
+                const emailStr = removeVietnameseTones(item.email || '');
+                const actCodeStr = String(item.code || '').toLowerCase();
+
+                const matchesSearch = !searchQuery || 
+                                      nameStr.includes(searchQuery) ||
+                                      codeStr.includes(searchQuery) ||
+                                      classStr.includes(searchQuery) ||
+                                      facultyStr.includes(searchQuery) ||
+                                      phoneStr.includes(searchQuery) ||
+                                      emailStr.includes(searchQuery);
+
+                const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
+                const matchesActivity = !actFilter || actCodeStr === actFilter;
+
+                return matchesSearch && matchesFaculty && matchesActivity;
+            });
+
+            if (filtered.length === 0) {
+                alert('Không có dữ liệu nào phù hợp để xuất file Excel!');
+                return;
+            }
+
+            // Định dạng tiêu đề cột
+            let csvContent = "\uFEFF"; // Byte Order Mark (BOM) để Excel đọc đúng tiếng Việt UTF-8
+            csvContent += "STT,Thời Gian,Mã Sự Kiện,Tên Sự Kiện,MSSV,Họ và Tên,Lớp,Khoa,Số Điện Thoại,Gmail,Khoảng Cách,Thiết Bị,Tọa độ sự kiện,IP Máy\r\n";
+
+            filtered.forEach((item, idx) => {
+                const row = [
+                    idx + 1,
+                    `"${item.timestamp}"`,
+                    `"${item.code}"`,
+                    `"${item.title || ''}"`,
+                    `"${item.studentCode}"`,
+                    `"${item.name}"`,
+                    `"${item.className || ''}"`,
+                    `"${item.faculty || ''}"`,
+                    `"${item.phoneNumber || ''}"`,
+                    `"${item.email || ''}"`,
+                    `"${item.distance || ''}"`,
+                    `"${item.device || ''}"`,
+                    `"${item.coords || ''}"`,
+                    `"${item.ip || ''}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            // Tạo link tải file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            
+            let facultyTag = facultyFilter ? removeVietnameseTones(facultyFilter).replace(/\s+/g, '_').toUpperCase() : '';
+            let actTag = actFilter ? actFilter.toUpperCase() : 'Tat_Ca';
+            const filename = `Danh_Sach_Diem_Danh_${facultyTag ? facultyTag + '_' : ''}${actTag}_${new Date().toISOString().slice(0,10)}.csv`;
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }L (Dạng CSV UTF-8 hỗ trợ Excel không lỗi Tiếng Việt)
         function exportToExcel() {
             const role = sessionStorage.getItem("admin_role");
             if (role === "staff") {
