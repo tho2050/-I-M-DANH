@@ -1850,8 +1850,9 @@
             }
 
             const searchQuery = removeVietnameseTones(document.getElementById('attendanceSearch').value);
-            const actFilter = document.getElementById('attendanceActivityFilter').value.trim();
+            const actFilter = document.getElementById('attendanceActivityFilter') ? document.getElementById('attendanceActivityFilter').value.trim() : '';
 
+            // Lấy toàn bộ dữ liệu của tất cả 4 khoa (so khớp theo sự kiện và tìm kiếm nếu có)
             const baseData = attendanceData.filter(item => {
                 const nameStr = removeVietnameseTones(item.name || '');
                 const codeStr = removeVietnameseTones(item.studentCode || '');
@@ -1868,22 +1869,21 @@
                                       phoneStr.includes(searchQuery) ||
                                       emailStr.includes(searchQuery);
 
-                const matchesFaculty = matchFaculty(item.faculty, facultyFilter);
                 const matchesActivity = matchActivity(item, actFilter);
-                return matchesSearch && matchesFaculty && matchesActivity;
+                return matchesSearch && matchesActivity;
             });
 
             if (baseData.length === 0) {
-                alert('Không có dữ liệu điểm danh phù hợp với bộ lọc để xuất!');
+                alert('Không có dữ liệu điểm danh phù hợp với sự kiện đang chọn để xuất!');
                 return;
             }
 
             if (typeof XLSX !== 'undefined') {
                 const wb = XLSX.utils.book_new();
 
-                // 1. Sheet Tất Cả
+                // 1. Sheet Tổng Hợp (Tất cả 4 khoa)
                 const wsAll = createAttendanceSheetData(baseData);
-                XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả Điểm Danh");
+                XLSX.utils.book_append_sheet(wb, wsAll, "Tất Cả 4 Khoa");
 
                 // 2. Sheet Khoa Kỹ Thuật Công Nghệ
                 const dataKTCN = baseData.filter(item => matchFaculty(item.faculty, 'Khoa Kỹ thuật Công nghệ'));
@@ -1905,7 +1905,9 @@
                 const wsKTruc = createAttendanceSheetData(dataKTruc);
                 XLSX.utils.book_append_sheet(wb, wsKTruc, "Khoa Kiến Trúc");
 
-                const filename = `Danh_Sach_Diem_Danh_Tong_Hop_${actFilter ? actFilter.toUpperCase() + '_' : ''}${new Date().toISOString().slice(0,10)}.xlsx`;
+                const dateStr = new Date().toISOString().slice(0, 10);
+                const eventSlug = actFilter ? `_${actFilter.replace(/[\/\\:*?"<>|]/g, '_')}` : '';
+                const filename = `Diem_Danh_4_Khoa${eventSlug}_${dateStr}.xlsx`;
                 XLSX.writeFile(wb, filename);
             } else {
                 exportToExcel();
@@ -1920,6 +1922,7 @@
                 alert("Tài khoản của bạn không có quyền tải xuống danh sách điểm danh!");
                 return;
             }
+            const actFilter = document.getElementById('attendanceActivityFilter') ? document.getElementById('attendanceActivityFilter').value.trim() : '';
             const faculties = [
                 { name: 'Khoa Kỹ thuật Công nghệ', key: 'Khoa_KT_CongNghe' },
                 { name: 'Khoa Kinh tế', key: 'Khoa_KinhTe' },
@@ -1930,7 +1933,11 @@
             let exportedCount = 0;
             faculties.forEach((fac, i) => {
                 setTimeout(() => {
-                    const facData = attendanceData.filter(item => matchFaculty(item.faculty, fac.name));
+                    const facData = attendanceData.filter(item => {
+                        const matchesFaculty = matchFaculty(item.faculty, fac.name);
+                        const matchesActivity = matchActivity(item, actFilter);
+                        return matchesFaculty && matchesActivity;
+                    });
                     if (facData.length > 0) {
                         exportedCount++;
                         if (typeof XLSX !== 'undefined') {
