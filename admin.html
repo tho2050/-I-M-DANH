@@ -752,44 +752,56 @@
             const user = document.getElementById('adminUsernameInput').value.trim().toLowerCase();
             const pwd = document.getElementById('adminPwdInput').value.trim(); // Giữ nguyên chữ hoa chữ thường của mật khẩu
 
-            // 0. Kiểm tra mật khẩu vừa đổi gần đây (Cho phép đăng nhập tức thì với mật khẩu mới)
+            const loginErr = document.getElementById('loginError');
+            if (loginErr) loginErr.classList.add('d-none');
+
+            // 0. Kiểm tra tài khoản Quản trị viên chính (hongnhung2050py@gmail.com)
+            const mainAdminUsers = ["hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung"];
+            
+            // Lấy mật khẩu đã đổi gần đây nếu có (hoặc mật khẩu mặc định chính thức: Nnhn2005@)
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
-            if (localPsws[user] && pwd === localPsws[user]) {
-                sessionStorage.setItem("admin_logged", "true");
-                sessionStorage.setItem("admin_user", user);
-                const role = (user === "hongnhung@muce.edu.vn" || user === "dhxdmtmuce") ? "super" : "staff";
-                sessionStorage.setItem("admin_role", role);
-                showDashboard();
-                return;
+            const expectedMainPwd = localPsws[user] || "Nnhn2005@";
+
+            if (mainAdminUsers.includes(user)) {
+                if (pwd === expectedMainPwd) {
+                    sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_user", user);
+                    sessionStorage.setItem("admin_role", "super");
+                    showDashboard();
+                    return;
+                } else {
+                    if (loginErr) {
+                        loginErr.textContent = "Mật khẩu không chính xác! Vui lòng nhập đúng mật khẩu.";
+                        loginErr.classList.remove('d-none');
+                    }
+                    return;
+                }
             }
 
-            // 1. Kiểm tra tài khoản mặc định tĩnh trước (đăng nhập tức thì)
-            const superUsers = ["hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung"];
-            const staffUsers = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien", "ptk@gmail.com", "ptk"];
-
-            const allowedPasswordsSuper = ["admin123", "nhung2011", "dhxdmtmuce", "12345", "Nnhn2005@", "nnhn2005@"];
-            const allowedPasswordsStaff = ["admin123", "12345"];
-
-            const isSuperUserMatch = superUsers.includes(user) || user.includes("hongnhung") || user.includes("dhxdmt");
-            const isSuperPwdMatch = allowedPasswordsSuper.includes(pwd) || pwd === user || pwd.toLowerCase() === "nnhn2005@" || pwd === "nhung2011" || pwd === "admin123";
-
-            if (isSuperUserMatch && isSuperPwdMatch) {
-                sessionStorage.setItem("admin_logged", "true");
-                sessionStorage.setItem("admin_user", user);
-                sessionStorage.setItem("admin_role", "super");
-                showDashboard();
-                return;
-            }
-
-            const isStaffUserMatch = staffUsers.includes(user) || user.includes("ptk");
-            const isStaffPwdMatch = allowedPasswordsStaff.includes(pwd) || pwd === "12345" || pwd === "admin123";
-
-            if (isStaffUserMatch && isStaffPwdMatch) {
-                sessionStorage.setItem("admin_logged", "true");
-                sessionStorage.setItem("admin_user", user);
-                sessionStorage.setItem("admin_role", "staff");
-                showDashboard();
-                return;
+            // 1. Kiểm tra tài khoản đã đăng ký cục bộ
+            const localAccs = getLocalRegisteredAccounts();
+            const foundAcc = localAccs.find(a => a.username.toLowerCase() === user);
+            if (foundAcc) {
+                if (foundAcc.password === pwd) {
+                    if (!foundAcc.approved) {
+                        if (loginErr) {
+                            loginErr.textContent = "Tài khoản của bạn đang chờ Super Admin phê duyệt!";
+                            loginErr.classList.remove('d-none');
+                        }
+                        return;
+                    }
+                    sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_user", user);
+                    sessionStorage.setItem("admin_role", foundAcc.role || "staff");
+                    showDashboard();
+                    return;
+                } else {
+                    if (loginErr) {
+                        loginErr.textContent = "Mật khẩu không chính xác!";
+                        loginErr.classList.remove('d-none');
+                    }
+                    return;
+                }
             }
 
             // 2. Xác thực tài khoản động đăng ký lưu trên Google Sheet
@@ -812,12 +824,16 @@
                     sessionStorage.setItem("admin_role", result.role || "staff");
                     showDashboard();
                 } else {
-                    document.getElementById('loginError').textContent = result.message || "Tài khoản hoặc mật khẩu không chính xác!";
-                    document.getElementById('loginError').classList.remove('d-none');
+                    if (loginErr) {
+                        loginErr.textContent = result.message || "Tài khoản hoặc mật khẩu không chính xác!";
+                        loginErr.classList.remove('d-none');
+                    }
                 }
             } catch (err) {
-                document.getElementById('loginError').textContent = "Lỗi kết nối xác thực tài khoản từ Google Sheets!";
-                document.getElementById('loginError').classList.remove('d-none');
+                if (loginErr) {
+                    loginErr.textContent = "Tài khoản hoặc mật khẩu không chính xác!";
+                    loginErr.classList.remove('d-none');
+                }
                 console.error(err);
             } finally {
                 if (btn) {

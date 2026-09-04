@@ -1,7 +1,7 @@
 // CẤU HÌNH HỆ THỐNG ĐIỂM DANH GPS
 const CONFIG = {
     // Mật khẩu trang quản trị (Admin Panel)
-    adminPassword: "admin123",
+    adminPassword: "Nnhn2005@",
 
     // Link Google Sheets kết quả (để Admin click xem trực tiếp)
     googleSheetUrl: "https://docs.google.com/spreadsheets/d/12IFrgjYT7qGWXe9lXtcE-oRrmz-BU9ga-m9nYacTlCA/edit",
