@@ -755,15 +755,12 @@
             const loginErr = document.getElementById('loginError');
             if (loginErr) loginErr.classList.add('d-none');
 
-            // 0. Kiểm tra tài khoản Quản trị viên chính (hongnhung2050py@gmail.com)
-            const mainAdminUsers = ["hongnhung2050py@gmail.com", "hongnhung2050py", "hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung"];
-            
-            // Lấy mật khẩu đã đổi gần đây nếu có (hoặc mật khẩu mặc định chính thức: Nnhn2005@)
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
-            const expectedMainPwd = localPsws[user] || "Nnhn2005@";
 
-            if (mainAdminUsers.includes(user)) {
-                if (pwd === expectedMainPwd) {
+            // 1. DUY NHẤT tài khoản Quản trị viên chính: hongnhung2050py@gmail.com / hongnhung2050py (mật khẩu: Nnhn2005@)
+            if (user === "hongnhung2050py@gmail.com" || user === "hongnhung2050py") {
+                const expectedPwd = localPsws[user] || "Nnhn2005@";
+                if (pwd === expectedPwd) {
                     sessionStorage.setItem("admin_logged", "true");
                     sessionStorage.setItem("admin_user", user);
                     sessionStorage.setItem("admin_role", "super");
@@ -771,14 +768,53 @@
                     return;
                 } else {
                     if (loginErr) {
-                        loginErr.textContent = "Mật khẩu không chính xác! Vui lòng nhập đúng mật khẩu.";
+                        loginErr.textContent = "Mật khẩu không chính xác!";
                         loginErr.classList.remove('d-none');
                     }
                     return;
                 }
             }
 
-            // 1. Kiểm tra tài khoản đã đăng ký cục bộ
+            // 2. Các tài khoản Super Admin có sẵn: hongnhung@muce.edu.vn, dhxdmtmuce (mật khẩu: admin123 / nhung2011)
+            const otherSuperAccounts = ["hongnhung@muce.edu.vn", "dhxdmtmuce", "hongnhung"];
+            if (otherSuperAccounts.includes(user)) {
+                const allowedPsws = ["admin123", "nhung2011"];
+                const customPwd = localPsws[user];
+                if (pwd === customPwd || allowedPsws.includes(pwd)) {
+                    sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_user", user);
+                    sessionStorage.setItem("admin_role", "super");
+                    showDashboard();
+                    return;
+                } else {
+                    if (loginErr) {
+                        loginErr.textContent = "Mật khẩu không chính xác!";
+                        loginErr.classList.remove('d-none');
+                    }
+                    return;
+                }
+            }
+
+            // 3. Các tài khoản Staff có sẵn: nguyennuhongnhung, dhxhmt, nguyenthithuhien (mật khẩu: admin123)
+            const defaultStaffAccounts = ["nguyennuhongnhung", "dhxhmt", "nguyenthithuhien"];
+            if (defaultStaffAccounts.includes(user)) {
+                const customPwd = localPsws[user];
+                if (pwd === customPwd || pwd === "admin123") {
+                    sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_user", user);
+                    sessionStorage.setItem("admin_role", "staff");
+                    showDashboard();
+                    return;
+                } else {
+                    if (loginErr) {
+                        loginErr.textContent = "Mật khẩu không chính xác!";
+                        loginErr.classList.remove('d-none');
+                    }
+                    return;
+                }
+            }
+
+            // 4. Kiểm tra tài khoản đã đăng ký cục bộ
             const localAccs = getLocalRegisteredAccounts();
             const foundAcc = localAccs.find(a => a.username.toLowerCase() === user);
             if (foundAcc) {
@@ -1782,6 +1818,7 @@
             const deletedAccounts = JSON.parse(localStorage.getItem("deleted_accounts") || "[]").map(u => u.toLowerCase());
 
             const defaultAccounts = [
+                { username: "hongnhung2050py@gmail.com", password: "Nnhn2005@", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "Hongnhung@muce.edu.vn", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "dhxdmtmuce", password: "admin123 / nhung2011", role: "super", regDate: "Mặc định hệ thống", status: "approved" },
                 { username: "nguyennuhongnhung", password: "admin123", role: "staff", regDate: "Mặc định hệ thống", status: "approved" },
