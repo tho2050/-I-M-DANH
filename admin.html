@@ -373,6 +373,9 @@
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-primary me-2"></i>Danh sách sinh viên
                             điểm danh</h5>
                         <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-primary fw-bold d-none" id="btnOpenManualAddModal" onclick="openManualAttendanceModal()">
+                                <i class="fa-solid fa-user-plus me-1"></i> Thêm Điểm Danh Thủ Công
+                            </button>
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-success fw-bold" onclick="exportMultiSheetExcel(event)">
                                     <i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel (4 Khoa)
@@ -446,6 +449,7 @@
                                     <th>Thiết bị</th>
                                     <th>Tọa độ sự kiện</th>
                                     <th>IP máy</th>
+                                    <th class="text-center d-none" id="thManualAction">Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody id="attendanceTableBody">
@@ -649,6 +653,71 @@
         </div>
     </div>
 
+    <!-- Modal Thêm / Sửa Sinh Viên Điểm Danh Thủ Công (Dành riêng cho hongnhung@muce.edu.vn) -->
+    <div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
+                <div class="modal-header bg-primary text-white py-3" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h5 class="modal-title fw-bold" id="manualModalLabel"><i class="fa-solid fa-user-pen me-2"></i>Thêm / Sửa Sinh Viên Điểm Danh</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form onsubmit="handleSaveManualAttendance(event)" id="manualAttendanceForm">
+                    <input type="hidden" id="manualEditIndex" value="-1" />
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info py-2 small mb-3">
+                            <i class="fa-solid fa-shield-halved me-1"></i> <strong>Đặc quyền Super Admin (hongnhung@muce.edu.vn):</strong> Tự thêm/sửa sinh viên trực tiếp vào danh sách và xuất file Excel mà không cần quét mã QR.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Chọn Sự kiện điểm danh <span class="text-danger">*</span>:</label>
+                            <select class="form-select" id="manualEventCode" required>
+                                <!-- Rendered dynamically from getActivities() -->
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">MSSV <span class="text-danger">*</span>:</label>
+                                <input type="text" class="form-control" id="manualStudentCode" placeholder="VD: 21000123" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Họ và Tên <span class="text-danger">*</span>:</label>
+                                <input type="text" class="form-control" id="manualName" placeholder="VD: Nguyễn Văn A" required />
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Lớp:</label>
+                                <input type="text" class="form-control" id="manualClass" placeholder="VD: D23CTC1" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Khoa <span class="text-danger">*</span>:</label>
+                                <select class="form-select" id="manualFaculty" required>
+                                    <option value="Khoa Kỹ thuật Công nghệ">Khoa Kỹ thuật Công nghệ</option>
+                                    <option value="Khoa Kinh tế">Khoa Kinh tế</option>
+                                    <option value="Khoa Xây dựng">Khoa Xây dựng</option>
+                                    <option value="Khoa Kiến trúc">Khoa Kiến trúc</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Số Điện Thoại:</label>
+                                <input type="text" class="form-control" id="manualPhone" placeholder="0905..." />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Gmail:</label>
+                                <input type="email" class="form-control" id="manualEmail" placeholder="sv@muce.edu.vn" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light d-flex gap-2 p-3" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success fw-bold flex-grow-1" id="btnSaveManual"><i class="fa-solid fa-save me-1"></i>Lưu Điểm Danh</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -688,6 +757,7 @@
             const localPsws = JSON.parse(localStorage.getItem("changed_passwords") || "{}");
             if (localPsws[user] && pwd === localPsws[user]) {
                 sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_user", user);
                 const role = (user === "hongnhung@muce.edu.vn" || user === "dhxdmtmuce") ? "super" : "staff";
                 sessionStorage.setItem("admin_role", role);
                 showDashboard();
@@ -706,6 +776,7 @@
 
             if (isSuperUserMatch && isSuperPwdMatch) {
                 sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_user", user);
                 sessionStorage.setItem("admin_role", "super");
                 showDashboard();
                 return;
@@ -716,6 +787,7 @@
 
             if (isStaffUserMatch && isStaffPwdMatch) {
                 sessionStorage.setItem("admin_logged", "true");
+                sessionStorage.setItem("admin_user", user);
                 sessionStorage.setItem("admin_role", "staff");
                 showDashboard();
                 return;
@@ -737,6 +809,7 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     sessionStorage.setItem("admin_logged", "true");
+                    sessionStorage.setItem("admin_user", user);
                     sessionStorage.setItem("admin_role", result.role || "staff");
                     showDashboard();
                 } else {
@@ -1129,15 +1202,28 @@
             }
         }
 
+        function isHongNhungAdmin() {
+            const user = (sessionStorage.getItem("admin_user") || '').toLowerCase();
+            const role = sessionStorage.getItem("admin_role");
+            return user === "hongnhung@muce.edu.vn" || user.includes("hongnhung") || role === "super";
+        }
+
         function showDashboard() {
             document.getElementById('loginPanel').classList.add('d-none');
             document.getElementById('adminDashboard').classList.remove('d-none');
             document.getElementById('btnLogout').classList.remove('d-none');
 
-            // Ẩn/Hiện nút xuất báo cáo Excel và Menu Duyệt tài khoản dựa theo vai trò
+            // Ẩn/Hiện nút xuất báo cáo Excel, Menu Duyệt tài khoản và Nút thêm thủ công dựa theo vai trò
             const role = sessionStorage.getItem("admin_role");
             const exportBtn = document.getElementById('btnExportExcel');
             const approveMenu = document.getElementById('menu-approve');
+            const manualAddBtn = document.getElementById('btnOpenManualAddModal');
+
+            if (isHongNhungAdmin()) {
+                if (manualAddBtn) manualAddBtn.classList.remove('d-none');
+            } else {
+                if (manualAddBtn) manualAddBtn.classList.add('d-none');
+            }
 
             if (role === "staff") {
                 if (exportBtn) exportBtn.style.display = 'none';
@@ -1829,12 +1915,24 @@
         function renderAttendanceTable(data) {
             const tbody = document.getElementById('attendanceTableBody');
             if (!tbody) return;
+            const canEdit = isHongNhungAdmin();
+            const thAction = document.getElementById('thManualAction');
+            if (thAction) {
+                if (canEdit) thAction.classList.remove('d-none');
+                else thAction.classList.add('d-none');
+            }
+
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">Chưa có ai điểm danh hoặc không tìm thấy kết quả phù hợp.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${canEdit ? 15 : 14}" class="text-center py-4 text-muted">Chưa có ai điểm danh hoặc không tìm thấy kết quả phù hợp.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = data.map((item, idx) => `
+            tbody.innerHTML = data.map((item, idx) => {
+                // Tìm vị trí gốc trong mảng attendanceData
+                const origIndex = attendanceData.indexOf(item);
+                const actualIndex = origIndex !== -1 ? origIndex : idx;
+
+                return `
                 <tr class="text-nowrap">
                     <td>${idx + 1}</td>
                     <td class="small text-muted">${item.timestamp}</td>
@@ -1850,8 +1948,178 @@
                     <td class="small text-truncate" style="max-width: 120px;" title="${item.device}">${item.device}</td>
                     <td class="small font-monospace">${item.coords || '--'}</td>
                     <td class="small font-monospace">${item.ip || '--'}</td>
+                    ${canEdit ? `
+                    <td class="text-center text-nowrap">
+                        <button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="openManualAttendanceModal(${actualIndex})" title="Sửa thông tin"><i class="fa-solid fa-pencil"></i> Sửa</button>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteManualAttendance(${actualIndex})" title="Xóa điểm danh"><i class="fa-solid fa-trash"></i></button>
+                    </td>` : ''}
                 </tr>
-            `).join('');
+            `;}).join('');
+        }
+
+        // MỞ MODAL THÊM / SỬA ĐIỂM DANH THỦ CÔNG (DÀNH CHO HONGNHUNG@MUCE.EDU.VN)
+        function openManualAttendanceModal(editIdx) {
+            if (!isHongNhungAdmin()) {
+                alert("Chỉ tài khoản Super Admin (hongnhung@muce.edu.vn) mới có quyền sử dụng chức năng này!");
+                return;
+            }
+
+            const eventSelect = document.getElementById('manualEventCode');
+            const acts = getActivities();
+            if (eventSelect) {
+                eventSelect.innerHTML = acts.map(a => `<option value="${a.code}">${a.code} - ${a.title}</option>`).join('');
+                if (acts.length === 0) {
+                    eventSelect.innerHTML = '<option value="DEFAULT">Sự kiện chung</option>';
+                }
+            }
+
+            const modalTitle = document.getElementById('manualModalLabel');
+            const btnSubmit = document.getElementById('btnSaveManual');
+            const editInput = document.getElementById('manualEditIndex');
+
+            if (editIdx !== undefined && editIdx >= 0 && editIdx < attendanceData.length) {
+                // Chế độ Sửa
+                const record = attendanceData[editIdx];
+                editInput.value = editIdx;
+                if (eventSelect) eventSelect.value = record.code || (acts[0] ? acts[0].code : '');
+                document.getElementById('manualStudentCode').value = record.studentCode || '';
+                document.getElementById('manualName').value = record.name || '';
+                document.getElementById('manualClass').value = record.className || '';
+                document.getElementById('manualFaculty').value = record.faculty || 'Khoa Kỹ thuật Công nghệ';
+                document.getElementById('manualPhone').value = record.phoneNumber || '';
+                document.getElementById('manualEmail').value = record.email || '';
+
+                if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-pencil text-warning me-2"></i>Sửa Thông Tin Sinh Viên Điểm Danh';
+                if (btnSubmit) btnSubmit.innerHTML = '<i class="fa-solid fa-save me-1"></i>Cập Nhật Điểm Danh';
+            } else {
+                // Chế độ Thêm Mới
+                editInput.value = -1;
+                document.getElementById('manualAttendanceForm').reset();
+                if (eventSelect && acts.length > 0) eventSelect.value = acts[0].code;
+
+                if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-user-plus text-success me-2"></i>Thêm Sinh Viên Điểm Danh Thủ Công';
+                if (btnSubmit) btnSubmit.innerHTML = '<i class="fa-solid fa-plus me-1"></i>Lưu Điểm Danh';
+            }
+
+            const modalEl = document.getElementById('manualAttendanceModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+
+        // XỬ LÝ LƯU THÊM/SỬA ĐIỂM DANH THỦ CÔNG
+        async function handleSaveManualAttendance(e) {
+            if (e) e.preventDefault();
+            if (!isHongNhungAdmin()) {
+                alert("Bạn không có quyền thực hiện hành động này!");
+                return;
+            }
+
+            const editIdx = parseInt(document.getElementById('manualEditIndex').value, 10);
+            const eventCode = document.getElementById('manualEventCode').value.trim();
+            const studentCode = document.getElementById('manualStudentCode').value.trim();
+            const name = document.getElementById('manualName').value.trim();
+            const className = document.getElementById('manualClass').value.trim();
+            const faculty = document.getElementById('manualFaculty').value;
+            const phone = document.getElementById('manualPhone').value.trim();
+            const email = document.getElementById('manualEmail').value.trim();
+
+            if (!eventCode || !studentCode || !name || !faculty) {
+                alert("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
+                return;
+            }
+
+            const acts = getActivities();
+            const act = acts.find(a => a.code === eventCode) || {};
+            const eventTitle = act.title || eventCode;
+            const coords = act.latitude && act.longitude ? `${act.latitude}, ${act.longitude}` : '';
+
+            const now = new Date();
+            const timestamp = now.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }) || now.toISOString();
+
+            if (editIdx >= 0 && editIdx < attendanceData.length) {
+                // Cập nhật dòng hiện có
+                attendanceData[editIdx].code = eventCode;
+                attendanceData[editIdx].title = eventTitle;
+                attendanceData[editIdx].studentCode = studentCode;
+                attendanceData[editIdx].name = name;
+                attendanceData[editIdx].className = className;
+                attendanceData[editIdx].faculty = faculty;
+                attendanceData[editIdx].phoneNumber = phone;
+                attendanceData[editIdx].email = email;
+            } else {
+                // Thêm bản ghi mới
+                const newRecord = {
+                    timestamp: timestamp,
+                    code: eventCode,
+                    title: eventTitle,
+                    studentCode: studentCode,
+                    name: name,
+                    className: className,
+                    faculty: faculty,
+                    phoneNumber: phone,
+                    email: email,
+                    distance: "0.0m (Thủ công)",
+                    device: "Super Admin (hongnhung@muce.edu.vn)",
+                    coords: coords,
+                    ip: "Admin Panel"
+                };
+                attendanceData.unshift(newRecord);
+            }
+
+            // Lưu vào localStorage
+            localStorage.setItem("gps_attendance_local_records", JSON.stringify(attendanceData));
+
+            // Đồng bộ gửi lên Google Apps Script
+            if (CONFIG.googleScriptUrl) {
+                fetch(CONFIG.googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'manualAttendance',
+                        timestamp: timestamp,
+                        code: eventCode,
+                        title: eventTitle,
+                        studentCode: studentCode,
+                        name: name,
+                        className: className,
+                        faculty: faculty,
+                        phoneNumber: phone,
+                        email: email,
+                        distance: "0.0m (Thủ công)",
+                        device: "Super Admin (hongnhung@muce.edu.vn)",
+                        coords: coords,
+                        ip: "Admin Panel"
+                    })
+                }).catch(err => console.warn("Lỗi đồng bộ ngầm Google Sheets:", err));
+            }
+
+            // Đóng Modal và vẽ lại bảng
+            const modalEl = document.getElementById('manualAttendanceModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            filterAttendanceTable();
+            alert(editIdx >= 0 ? "Đã cập nhật thông tin sinh viên điểm danh thành công!" : "Đã thêm sinh viên vào danh sách điểm danh thành công!");
+        }
+
+        // XÓA ĐIỂM DANH THỦ CÔNG
+        function deleteManualAttendance(idx) {
+            if (!isHongNhungAdmin()) {
+                alert("Bạn không có quyền xóa điểm danh!");
+                return;
+            }
+            if (idx < 0 || idx >= attendanceData.length) return;
+
+            const target = attendanceData[idx];
+            if (!confirm(`Bạn có chắc chắn muốn XÓA sinh viên "${target.name}" (MSSV: ${target.studentCode}) khỏi danh sách điểm danh?`)) {
+                return;
+            }
+
+            attendanceData.splice(idx, 1);
+            localStorage.setItem("gps_attendance_local_records", JSON.stringify(attendanceData));
+            filterAttendanceTable();
+            alert("Đã xóa bản ghi điểm danh thành công!");
         }
 
         // Chuẩn hóa chuỗi tiếng Việt không dấu
