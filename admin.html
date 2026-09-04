@@ -1935,15 +1935,24 @@
         async function fetchAdminSecretCode() {
             const input = document.getElementById('adminSecretCodeInput');
             if (!input) return;
-            const savedCode = localStorage.getItem("admin_secret_code") || "nhung2011";
-            input.value = savedCode;
+            const savedCode = localStorage.getItem("admin_secret_code");
+            if (savedCode) {
+                input.value = savedCode;
+            } else {
+                input.value = "nhung2011";
+            }
+
+            if (!CONFIG.googleScriptUrl) return;
 
             try {
                 const res = await fetch(CONFIG.googleScriptUrl + '?action=getAdminCode&_t=' + Date.now());
                 const data = await res.json();
                 if (data.status === 'success' && data.code) {
-                    input.value = data.code;
-                    localStorage.setItem("admin_secret_code", data.code);
+                    // Nếu mã cloud trả về có giá trị khác mặc định hoặc thiết bị chưa tùy chỉnh
+                    if (!localStorage.getItem("admin_secret_code_customized") || (data.code && data.code !== "nhung2011")) {
+                        input.value = data.code;
+                        localStorage.setItem("admin_secret_code", data.code);
+                    }
                 }
             } catch (err) {
                 // Giữ nguyên mã lưu cục bộ
@@ -1961,14 +1970,25 @@
 
             if (!confirm(`Bạn có chắc chắn muốn thay đổi Mã Admin bảo mật thành "${newCode}"?`)) return;
 
+            // 1. Lưu vĩnh viễn vào bộ nhớ trình duyệt
             localStorage.setItem("admin_secret_code", newCode);
+            localStorage.setItem("admin_secret_code_customized", "true");
+            input.value = newCode;
 
-            try {
-                const res = await fetch(CONFIG.googleScriptUrl + '?action=setAdminCode&code=' + encodeURIComponent(newCode) + '&_t=' + Date.now());
-                alert("Đã cập nhật Mã Admin bảo mật mới thành công!");
-            } catch (err) {
-                alert("Đã cập nhật Mã Admin bảo mật mới thành công!");
+            // 2. Gửi đồng bộ lên Google Apps Script
+            if (CONFIG.googleScriptUrl) {
+                try {
+                    fetch(CONFIG.googleScriptUrl + '?action=setAdminCode&code=' + encodeURIComponent(newCode) + '&_t=' + Date.now(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({ action: 'setAdminCode', code: newCode })
+                    }).catch(e => {
+                        fetch(CONFIG.googleScriptUrl + '?action=setAdminCode&code=' + encodeURIComponent(newCode) + '&_t=' + Date.now()).catch(err => console.warn(err));
+                    });
+                } catch(e) {}
             }
+
+            alert(`Đã lưu Mã Admin bảo mật mới: "${newCode}" thành công!`);
         }
 
         // TẢI DỮ LIỆU ĐIỂM DANH TỪ GOOGLE SHEET VÀ CẢ LOCALSTORAGE
