@@ -445,7 +445,6 @@
                                     <th>Khoa</th>
                                     <th>Số điện thoại</th>
                                     <th>Gmail</th>
-                                    <th>Cách tâm</th>
                                     <th>Thiết bị</th>
                                     <th>Tọa độ sự kiện</th>
                                     <th>IP máy</th>
@@ -1885,7 +1884,7 @@
         // TẢI DỮ LIỆU ĐIỂM DANH TỪ GOOGLE SHEET VÀ CẢ LOCALSTORAGE
         async function fetchAttendanceData() {
             const tbody = document.getElementById('attendanceTableBody');
-            tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu điểm danh...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu điểm danh...</td></tr>`;
 
             function cleanAndDeduplicateRecords(records) {
                 if (!Array.isArray(records)) return [];
@@ -1990,7 +1989,7 @@
             }
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${canEdit ? 15 : 14}" class="text-center py-4 text-muted">Chưa có ai điểm danh hoặc không tìm thấy kết quả phù hợp.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${canEdit ? 14 : 13}" class="text-center py-4 text-muted">Chưa có ai điểm danh hoặc không tìm thấy kết quả phù hợp.</td></tr>`;
                 return;
             }
 
@@ -2011,7 +2010,6 @@
                     <td><span class="badge bg-light text-dark border">${item.faculty || '--'}</span></td>
                     <td class="font-monospace">${item.phoneNumber || '--'}</td>
                     <td class="small">${item.email || '--'}</td>
-                    <td><span class="text-success fw-bold">${item.distance}</span></td>
                     <td class="small text-truncate" style="max-width: 120px;" title="${item.device}">${item.device}</td>
                     <td class="small font-monospace">${item.coords || '--'}</td>
                     <td class="small font-monospace">${item.ip || '--'}</td>
